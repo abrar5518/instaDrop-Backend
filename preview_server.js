@@ -135,9 +135,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Step 3 & 4: API Quote Submission with Dual Alert Dispatch
   if (path === '/api/v1/quotes' && req.method === 'POST') {
-    console.log("🔔 Step 3 & 4: Quote Submitted -> Admin Business WhatsApp Alert & Customer Auto Acknowledgment Dispatched!");
     res.writeHead(201, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       success: true,
@@ -148,9 +146,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Step 12 & 13: Payment Checkout Webhook Verification
   if (path === '/api/v1/payments/process' && req.method === 'POST') {
-    console.log("💰 Step 12 & 13: Online Payment Verified -> Order Status Updated to PAID!");
     dummyQuotes[0].payment_status = 'paid';
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
@@ -169,13 +165,13 @@ const server = http.createServer((req, res) => {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>InstaDrop Admin Panel — Courier Brokerage Dispatcher</title>
+      <title>InstaDrop Admin Panel — Executive Dispatch Desk</title>
       <script src="https://cdn.tailwindcss.com"></script>
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
       <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
     </head>
-    <body class="bg-[#f8fafc] text-slate-800 min-h-screen flex">
-      <aside class="w-64 bg-[#0a192f] border-r border-slate-800 flex flex-col justify-between p-6 shrink-0 shadow-xl">
+    <body class="bg-[#f8fafc] text-slate-800 min-h-screen flex antialiased">
+      <aside class="w-64 bg-[#0a192f] border-r border-slate-800 flex flex-col justify-between p-6 shrink-0 shadow-xl z-20">
         <div class="space-y-8">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-[#0a192f] text-[#c6ff00] flex items-center justify-center font-black border border-[#c6ff00]/40 shadow-md">
@@ -183,7 +179,7 @@ const server = http.createServer((req, res) => {
             </div>
             <div>
               <span class="font-extrabold text-xl tracking-tight text-white font-display">Insta<span class="text-[#c6ff00]">Drop</span></span>
-              <span class="block text-[9px] font-extrabold uppercase tracking-widest text-[#c6ff00]">Admin Dashboard</span>
+              <span class="block text-[9px] font-extrabold uppercase tracking-widest text-[#c6ff00]">Admin Control</span>
             </div>
           </div>
           <nav class="space-y-1.5 text-xs font-semibold">
@@ -205,13 +201,30 @@ const server = http.createServer((req, res) => {
             </a>
           </nav>
         </div>
-        <div class="text-[10px] text-slate-400 border-t border-slate-800 pt-4">InstaDrop Admin v1.0 • Running Live</div>
+        <div class="text-[10px] text-slate-400 border-t border-slate-800 pt-4">InstaDrop Admin v2.0 • Executive Desk</div>
       </aside>
-      <main class="flex-1 overflow-y-auto p-8 space-y-8">
+      <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <!-- TOP CONTROL BAR HEADER -->
+        <header class="bg-white border-b border-slate-200/80 px-8 py-4 flex items-center justify-between gap-4 shrink-0 shadow-xs z-10">
+          <div class="relative max-w-md w-full">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Quick search quote #, customer name, or postcode..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0a192f] focus:bg-white transition-all">
+          </div>
+          <div class="flex items-center gap-4 text-xs font-semibold">
+            <div class="flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-full">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="text-[11px] font-bold">DISPATCH SYSTEM ONLINE</span>
+            </div>
+            <div class="hidden sm:block text-slate-500 font-medium">Friday, 14 Aug 2026</div>
+            <div class="w-8 h-8 rounded-full bg-[#0a192f] text-[#c6ff00] flex items-center justify-center font-bold text-xs shadow-xs">AD</div>
+          </div>
+        </header>
+        <main class="flex-1 overflow-y-auto p-8 space-y-8">
   `;
 
   const getLayoutFooter = () => `
-      </main>
+        </main>
+      </div>
     </body>
     </html>
   `;
@@ -343,7 +356,7 @@ const server = http.createServer((req, res) => {
     `);
   }
 
-  // 3. SINGLE QUOTE DETAIL PAGE WITH NET PROFIT CALCULATOR & 1-CLICK WHATSAPP DISPATCHER
+  // 3. SINGLE QUOTE DETAIL PAGE WITH DYNAMIC NET PROFIT BADGE & 1-CLICK CLIPBOARD BUTTONS
   else if (path.startsWith('/admin/quotes/')) {
     const parts = path.split('/');
     const quoteId = parseInt(parts[parts.length - 1] || '1', 10);
@@ -423,8 +436,8 @@ const server = http.createServer((req, res) => {
           <div class="space-y-6">
             <form action="/pay/PAY-DEMO" method="GET" target="_blank" class="bg-white border-2 border-[#0a192f] rounded-3xl p-6 space-y-6 shadow-md sticky top-6">
               <div class="border-b border-slate-100 pb-3">
-                <span class="text-[10px] font-black text-[#0a192f] bg-[#c6ff00] px-3 py-1 rounded-full uppercase tracking-wider">DISPATCH PRICING TOOL</span>
-                <h3 class="text-base font-extrabold text-slate-900 font-display mt-2">Brokerage Pricing Engine</h3>
+                <span class="text-[10px] font-black text-[#0a192f] bg-[#c6ff00] px-3 py-1 rounded-full uppercase tracking-wider">BROKERAGE PRICING TOOL</span>
+                <h3 class="text-base font-extrabold text-slate-900 font-display mt-2">Quotation Generator</h3>
                 <p class="text-xs text-slate-500">Set customer selling price vs rider cost to calculate net profit margin.</p>
               </div>
 
@@ -446,8 +459,10 @@ const server = http.createServer((req, res) => {
                 </div>
 
                 <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 space-y-1 text-emerald-900 font-semibold">
-                  <div class="flex justify-between"><span>Auto Net Profit Margin:</span><strong class="text-emerald-700 text-sm font-black">£${activeQuote.net_profit} Profit</strong></div>
-                  <div class="flex justify-between text-slate-500 text-[11px]"><span>Payment Status:</span><span class="text-amber-600 font-bold uppercase">${activeQuote.payment_status}</span></div>
+                  <div class="flex justify-between items-center">
+                    <span>Auto Net Profit Margin:</span>
+                    <span class="bg-emerald-600 text-white font-extrabold text-xs px-3 py-1 rounded-full shadow-xs">£${activeQuote.net_profit} Profit (33.3%)</span>
+                  </div>
                 </div>
               </div>
 
@@ -456,9 +471,13 @@ const server = http.createServer((req, res) => {
                   <span>⚡ Save Order & Open Checkout Link</span>
                 </button>
 
-                <a href="https://wa.me/${activeQuote.phone.replace(/[^0-9]/g, '')}?text=${waText}" target="_blank" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-md flex items-center justify-center gap-2">
+                <a href="https://wa.me/${activeQuote.phone.replace(/[^0-9]/g, '')}?text=${waText}" target="_blank" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-md flex items-center justify-center gap-2">
                   <span>💬 Send Quote Instant via WhatsApp</span>
                 </a>
+
+                <button type="button" onclick="navigator.clipboard.writeText('http://localhost:8000/pay/PAY-DEMO'); alert('Payment Checkout Link copied to Clipboard!');" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                  <span>📋 Copy Checkout Link to Clipboard</span>
+                </button>
               </div>
             </form>
           </div>
@@ -468,18 +487,25 @@ const server = http.createServer((req, res) => {
     `);
   }
 
-  // 4. Orders Dashboard with Manual Payment Override & Delivery Status Switcher
+  // 4. Orders Dashboard with Interactive Status Filter Tabs & Delivery Progress Stepper
   else if (path === '/admin/orders') {
     res.writeHead(200);
     res.end(`
       ${getLayoutHeader('orders')}
       <div class="space-y-6 w-full">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 class="text-2xl font-extrabold text-slate-900 font-display">Orders & Delivery Lifecycle Control</h1>
             <p class="text-xs text-slate-500">Manage active deliveries, rider assignments, payment verification, and POD uploads.</p>
           </div>
-          <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-full">● 5 Active Orders</span>
+          <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-full">● 5 Active Deliveries</span>
+        </div>
+
+        <div class="flex items-center gap-2 border-b border-slate-200 text-xs font-bold pb-2">
+          <button class="px-4 py-2 rounded-xl bg-[#0a192f] text-white shadow-xs">All Orders (5)</button>
+          <button class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Pending Payment</button>
+          <button class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">In Transit</button>
+          <button class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Completed PODs</button>
         </div>
 
         <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
@@ -492,7 +518,7 @@ const server = http.createServer((req, res) => {
                   <th class="p-3.5">Vehicle</th>
                   <th class="p-3.5">Selling vs Driver Cost</th>
                   <th class="p-3.5">Payment Verification</th>
-                  <th class="p-3.5">Delivery Status</th>
+                  <th class="p-3.5">Delivery Status & Progress</th>
                   <th class="p-3.5">POD Certificate</th>
                 </tr>
               </thead>
@@ -521,7 +547,7 @@ const server = http.createServer((req, res) => {
                         Switch (Paid / Unpaid)
                       </button>
                     </td>
-                    <td class="p-3.5">
+                    <td class="p-3.5 space-y-2">
                       <select onchange="alert('Delivery Status Updated & Customer Notification Dispatched!');" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-800 font-extrabold">
                         <option value="driver_assigned">Driver Assigned</option>
                         <option value="dispatched">Dispatched</option>
@@ -529,6 +555,9 @@ const server = http.createServer((req, res) => {
                         <option value="in_transit" selected>In Transit</option>
                         <option value="delivered">Delivered</option>
                       </select>
+                      <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-[#0066ff] h-full rounded-full transition-all" style="width: ${q.status === 'converted' ? '100%' : '70%'};"></div>
+                      </div>
                     </td>
                     <td class="p-3.5">
                       <button onclick="alert('POD Photo & Signature Uploaded! Certificate emailed to customer.');" class="px-3 py-1.5 bg-[#0a192f] text-white rounded-lg font-bold text-[10px] hover:bg-[#051329]">
@@ -619,7 +648,7 @@ const server = http.createServer((req, res) => {
     `);
   }
 
-  // 6. Payment Checkout Page with Auto Payment Tracing
+  // 6. Payment Checkout Page
   else if (path.startsWith('/pay/')) {
     res.writeHead(200);
     res.end(`
@@ -705,5 +734,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`InstaDrop 18-Step Automated Courier Brokerage Engine running on http://localhost:${PORT}`);
+  console.log(`InstaDrop Executive Admin Panel running on http://localhost:${PORT}`);
 });

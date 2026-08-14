@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="space-y-6 w-full">
-    <!-- Top Breadcrumb & Status Navigation -->
+    <!-- Top Breadcrumb Navigation -->
     <div class="flex items-center justify-between border-b border-slate-200/80 pb-4">
         <a href="{{ route('admin.quotes.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">
             ← Back to All Quote Requests
@@ -122,19 +122,19 @@
 
         </div>
 
-        <!-- RIGHT COLUMN: Sticky Quotation Selling Price & 1-Click WhatsApp Quick Dispatcher (1/3 Width) -->
+        <!-- RIGHT COLUMN: Sticky Quotation Selling Price, Driver Cost & 1-Click Clipboard Copy Buttons (1/3 Width) -->
         <div class="space-y-6">
             
             <form action="{{ route('admin.invoices.generate', $quote->id) }}" method="POST" class="bg-white border-2 border-[#0a192f] rounded-3xl p-6 space-y-6 shadow-md sticky top-6">
                 @csrf
                 <div class="border-b border-slate-100 pb-3">
                     <span class="text-[10px] font-black text-[#0a192f] bg-[#c6ff00] px-3 py-1 rounded-full uppercase tracking-wider">
-                        DISPATCH PRICING TOOL
+                        BROKERAGE PRICING TOOL
                     </span>
                     <h3 class="text-base font-extrabold text-slate-900 font-display mt-2">
                         Quotation Generator
                     </h3>
-                    <p class="text-xs text-slate-500">Enter final selling price & dispatch payment invoice to customer.</p>
+                    <p class="text-xs text-slate-500">Enter final selling price & driver payout to calculate net profit margin.</p>
                 </div>
 
                 <div class="space-y-4 text-xs">
@@ -146,28 +146,22 @@
                     </div>
 
                     <div>
-                        <label class="block text-slate-700 font-bold mb-1">Full Pickup Address</label>
-                        <input type="text" name="pickup_address" value="Unit 4 Logistics Park, {{ $quote->collection_postcode }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900">
+                        <label class="block text-slate-700 font-bold mb-1">Customer Selling Price (£ Excl. VAT)</label>
+                        <input type="number" step="0.01" id="selling-price" name="quoted_selling_price" value="180.00" required class="w-full bg-slate-50 border-2 border-[#0a192f] rounded-xl px-3.5 py-3 text-slate-900 font-bold text-sm">
                     </div>
 
                     <div>
-                        <label class="block text-slate-700 font-bold mb-1">Full Delivery Address</label>
-                        <input type="text" name="delivery_address" value="Building 12 Commerce Center, {{ $quote->delivery_postcode }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900">
+                        <label class="block text-slate-700 font-bold mb-1">Driver / Rider Payout Cost (£)</label>
+                        <input type="number" step="0.01" id="driver-cost" name="driver_cost" value="120.00" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-semibold">
                     </div>
 
-                    <div>
-                        <label class="block text-slate-700 font-bold mb-1">Quoted Selling Price (£ Excl. VAT)</label>
-                        <input type="number" step="0.01" id="selling-price-input" name="quoted_selling_price" value="180.00" required class="w-full bg-slate-50 border-2 border-[#0a192f] rounded-xl px-3.5 py-3 text-slate-900 font-bold text-sm">
-                    </div>
-
-                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1 text-slate-600 font-medium">
-                        <div class="flex justify-between">
-                            <span>Standard VAT (20%):</span>
-                            <span>Auto-Calculated (£36.00)</span>
-                        </div>
-                        <div class="flex justify-between font-bold text-slate-900">
-                            <span>Total Price Inc. VAT:</span>
-                            <span class="text-emerald-700 font-extrabold text-sm">£216.00</span>
+                    <!-- DYNAMIC NET PROFIT MARGIN BADGE -->
+                    <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl text-emerald-900 space-y-1 font-semibold">
+                        <div class="flex justify-between items-center">
+                            <span>Auto Net Profit Margin:</span>
+                            <span class="bg-emerald-600 text-white font-extrabold text-xs px-3 py-1 rounded-full shadow-xs">
+                                £60.00 Profit (33.3%)
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -177,10 +171,15 @@
                         <span>⚡ Generate Invoice & Save Order</span>
                     </button>
 
-                    <!-- 1-CLICK WHATSAPP QUICK DISPATCH BUTTON -->
-                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $quote->phone) }}?text={{ urlencode('Hello ' . $quote->first_name . ', your InstaDrop delivery quote (#' . $quote->quote_number . ') from ' . $quote->collection_postcode . ' to ' . $quote->delivery_postcode . ' is £180.00 + VAT. Click to view invoice and pay online: http://localhost:8000/pay/PAY-DEMO') }}" target="_blank" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-md flex items-center justify-center gap-2">
+                    <!-- 1-CLICK WHATSAPP DISPATCH BUTTON -->
+                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $quote->phone) }}?text={{ urlencode('Hello ' . $quote->first_name . ', your InstaDrop delivery quote (#' . $quote->quote_number . ') from ' . $quote->collection_postcode . ' to ' . $quote->delivery_postcode . ' is £180.00 + VAT. Click to view invoice and pay online: http://localhost:8000/pay/PAY-DEMO') }}" target="_blank" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-md flex items-center justify-center gap-2">
                         <span>💬 Send Quote Instant via WhatsApp</span>
                     </a>
+
+                    <!-- 1-CLICK CLIPBOARD COPY BUTTON -->
+                    <button type="button" onclick="navigator.clipboard.writeText('http://localhost:8000/pay/PAY-DEMO'); alert('Payment Checkout Link copied to Clipboard!');" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
+                        <span>📋 Copy Checkout Link to Clipboard</span>
+                    </button>
                 </div>
             </form>
 

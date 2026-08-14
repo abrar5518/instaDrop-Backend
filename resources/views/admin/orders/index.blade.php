@@ -3,14 +3,30 @@
 @section('content')
 <div class="space-y-6 w-full">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-extrabold text-slate-900 font-display">Orders & Delivery Lifecycle Control</h1>
             <p class="text-xs text-slate-500">Manage active deliveries, rider assignments, payment verification, and POD uploads.</p>
         </div>
         <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-full">
-            ● {{ $orders->count() ?? 1 }} Active Orders
+            ● {{ $orders->count() ?? 1 }} Active Deliveries
         </span>
+    </div>
+
+    <!-- INTERACTIVE STATUS FILTER TABS -->
+    <div class="flex items-center gap-2 border-b border-slate-200 text-xs font-bold pb-2">
+        <button class="px-4 py-2 rounded-xl bg-[#0a192f] text-white shadow-xs">
+            All Orders ({{ $orders->count() ?? 1 }})
+        </button>
+        <button class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+            Pending Payment
+        </button>
+        <button class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+            In Transit
+        </button>
+        <button class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+            Completed PODs
+        </button>
     </div>
 
     <!-- Orders Overview Table -->
@@ -22,9 +38,9 @@
                         <th class="p-3.5">Order / Ref #</th>
                         <th class="p-3.5">Customer & Route</th>
                         <th class="p-3.5">Vehicle</th>
-                        <th class="p-3.5">Selling Price vs Rider Cost</th>
+                        <th class="p-3.5">Selling vs Rider Cost</th>
                         <th class="p-3.5">Payment Verification</th>
-                        <th class="p-3.5">Delivery Status</th>
+                        <th class="p-3.5">Delivery Status & Progress</th>
                         <th class="p-3.5">POD Certificate</th>
                     </tr>
                 </thead>
@@ -70,8 +86,8 @@
                             </form>
                         </td>
 
-                        <!-- Step 15 & 16: Delivery Milestone Status Switcher -->
-                        <td class="p-3.5">
+                        <!-- Delivery Status & Visual Progress Bar -->
+                        <td class="p-3.5 space-y-2">
                             <form action="{{ route('admin.orders.status', $order->id) }}" method="POST">
                                 @csrf
                                 <select name="status" onchange="this.form.submit()" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-800 font-extrabold">
@@ -83,6 +99,11 @@
                                     <option value="delivered" {{ $order->status === 'delivered' ? 'selected' : '' }}>Delivered</option>
                                 </select>
                             </form>
+
+                            <!-- Visual Delivery Stepper Progress Bar -->
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-[#0066ff] h-full rounded-full transition-all" style="width: {{ $order->status === 'delivered' ? '100%' : ($order->status === 'in_transit' ? '70%' : ($order->status === 'collected' ? '40%' : '20%')) }};"></div>
+                            </div>
                         </td>
 
                         <!-- Step 17: POD Document Uploader -->

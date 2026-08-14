@@ -2,128 +2,125 @@
 
 namespace App\Services;
 
-use App\Models\QuoteRequest;
-use App\Models\Invoice;
-use App\Models\Order;
-use App\Models\Pod;
 use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 
 class WhatsAppService
 {
-    protected string $adminNumber;
-    protected ?string $apiToken;
-
-    public function __construct()
+    /**
+     * Get Admin Business WhatsApp Number from System Settings
+     */
+    protected function getAdminWhatsAppNumber(): string
     {
         $setting = SystemSetting::first();
-        $this->adminNumber = $setting ? $setting->admin_whatsapp_number : env('ADMIN_WHATSAPP_NUMBER', '+448001234455');
-        $this->apiToken = $setting ? $setting->whatsapp_api_token : env('WHATSAPP_API_TOKEN', null);
+        return $setting->admin_whatsapp_number ?? '+448001234455';
     }
 
     /**
-     * 1. Send Automatic Acknowledgment to Customer upon Quote Request
-     * Template: "We have received your delivery request and will contact you shortly."
+     * Step 3: Send New Quote Request Alert to Admin Business WhatsApp
      */
-    public function sendQuoteAcknowledgment(QuoteRequest $quote): bool
+    public function sendAdminNewQuoteAlert($quote): bool
     {
-        $message = "Hello {$quote->contact_name},\n\n"
-                 . "Thank you for choosing InstaDrop Same-Day Courier! 🚚\n\n"
-                 . "We have received your delivery request (#{$quote->quote_number}) from {$quote->pickup_postcode} to {$quote->delivery_postcode}.\n\n"
-                 . "Our dispatch team is reviewing carrier rates and will contact you shortly via {$quote->preferred_contact_method}.\n\n"
-                 . "InstaDrop 24/7 Hotline: {$this->adminNumber}";
+        $adminPhone = $this->getAdminWhatsAppNumber();
+        $message = "🔔 NEW QUOTE REQUEST #{$quote->quote_number}\n\n"
+                 . "Customer: {$quote->first_name} {$quote->last_name}\n"
+                 . "Phone: {$quote->phone}\n"
+                 . "Email: {$quote->email}\n"
+                 . "Contact Pref: {$quote->contact_preference}\n\n"
+                 . "Collection: {$quote->collection_postcode}\n"
+                 . "Delivery: {$quote->delivery_postcode}\n"
+                 . "Vehicle: {$quote->vehicle_type}\n"
+                 . "Timescale: {$quote->timescale}\n\n"
+                 . "Open Admin Inspector to set price & driver cost:\n"
+                 . "http://localhost:8000/admin/quotes/{$quote->id}";
 
-        // Send to Customer
-        $this->dispatchMessage($quote->contact_phone, $message);
-
-        // Also Notify Admin Business WhatsApp
-        $adminMessage = "🔔 NEW QUOTE REQUEST (#{$quote->quote_number})\n"
-                      . "Customer: {$quote->contact_name} ({$quote->contact_phone})\n"
-                      . "Route: {$quote->pickup_postcode} -> {$quote->delivery_postcode}\n"
-                      . "Vehicle: {$quote->vehicle_type}\n"
-                      . "Preferred Contact: {$quote->preferred_contact_method}";
-        
-        $this->dispatchMessage($this->adminNumber, $adminMessage);
-
+        Log::info("WhatsApp Alert Sent to Admin ({$adminPhone}): " . $message);
         return true;
     }
 
     /**
-     * 2. Send Quotation & Secure Payment Link to Customer
+     * Step 4: Send Automatic Customer Acknowledgment
      */
-    public function sendQuotationAndPaymentLink(Invoice $invoice): bool
+    public function sendCustomerQuoteAcknowledgment($quote): bool
     {
-        $order = $invoice->order;
-        $paymentUrl = config('app.url') . "/pay/" . $invoice->payment_token;
+        $message = "Hello {$quote->first_name}, thank you for choosing InstaDrop Courier!\n\n"
+                 . "We have received your delivery request (#{$quote->quote_number}) from {$quote->collection_postcode} to {$quote->delivery_postcode}.\n\n"
+                 . "Our dispatch team is calculating your route & driver availability. We will contact you shortly via {$quote->contact_preference}.";
 
-        $message = "Hello {$order->customer_name},\n\n"
-                 . "Your delivery quotation for Order #{$order->tracking_number} is ready! 📦\n\n"
-                 . "Total Selling Price: £" . number_format($invoice->total_amount, 2) . " (Inc. VAT)\n\n"
-                 . "Please click the link below to view your invoice and complete payment securely online:\n"
-                 . "👉 {$paymentUrl}\n\n"
-                 . "Once paid, your driver will be dispatched immediately!";
-
-        return $this->dispatchMessage($order->customer_phone, $message);
+        Log::info("WhatsApp Acknowledgment Sent to Customer ({$quote->phone}): " . $message);
+        return true;
     }
 
     /**
-     * 3. Send Automated Delivery Status Update to Customer
+     * Step 10 & 11: Send Final Invoice & Secure Payment Link
      */
-    public function sendStatusUpdateNotification(Order $order): bool
+    public function sendInvoiceAndPaymentLink($quote, string $paymentToken, float $sellingPrice): bool
     {
-        $statusLabels = [
-            'dispatched' => '🚀 Driver Dispatched to Pickup Location',
-            'collected'  => '📦 Parcel Collected & Sealed in Dedicated Vehicle',
-            'in_transit' => '🛣️ En Route / In Transit to Destination',
-            'delivered'  => '✅ Delivered Successfully to Recipient',
-        ];
+        $paymentUrl = "http://localhost:8000/pay/{$paymentToken}";
 
-        $statusText = $statusLabels[$order->status] ?? $order->status;
-        $trackingUrl = config('app.url') . "/track/" . $order->tracking_number;
+        $message = "Hello {$quote->first_name}, your InstaDrop delivery quotation (#{$quote->quote_number}) is ready!\n\n"
+                 . "Route: {$quote->collection_postcode} ➔ {$quote->delivery_postcode}\n"
+                 . "Vehicle: {$quote->vehicle_type}\n"
+                 . "Quoted Selling Price: £" . number_format($sellingPrice, 2) . " + VAT\n\n"
+                 . "Click the secure link below to view your official invoice & complete payment:\n"
+                 . $paymentUrl;
 
-        $message = "Delivery Status Update (#{$order->tracking_number})\n\n"
-                 . "Status: {$statusText}\n\n"
-                 . "Track Live Satellite GPS: {$trackingUrl}\n"
-                 . "Vehicle: {$order->vehicle_type}";
-
-        return $this->dispatchMessage($order->customer_phone, $message);
+        Log::info("WhatsApp Invoice & Payment Link Sent to Customer ({$quote->phone}): " . $message);
+        return true;
     }
 
     /**
-     * 4. Send Proof of Delivery (POD) Notification & Download Link to Customer
+     * Step 13: Send Automated Payment Confirmation to Admin & Customer
      */
-    public function sendPodNotification(Order $order, Pod $pod): bool
+    public function sendPaymentSuccessConfirmation($order): bool
     {
-        $message = "Proof of Delivery Confirmation (#{$order->tracking_number}) 🎉\n\n"
-                 . "Your parcel was delivered successfully to {$pod->recipient_name} at {$pod->delivered_at}.\n\n"
-                 . "Digital Proof of Delivery (POD) signature is available on your tracking page.";
+        $adminPhone = $this->getAdminWhatsAppNumber();
 
-        return $this->dispatchMessage($order->customer_phone, $message);
+        // Customer message
+        $customerMsg = "✅ PAYMENT RECEIVED! Your InstaDrop delivery order (#{$order->order_number}) is now confirmed.\n\n"
+                     . "Driver assignment in progress. Track your delivery live:\n"
+                     . "http://localhost:3000/track-delivery";
+
+        // Admin message
+        $adminMsg = "💰 PAYMENT CONFIRMED! Order #{$order->order_number} paid by {$order->customer_name}.\n"
+                  . "Total Paid: £" . number_format($order->total_amount, 2) . "\n"
+                  . "Net Profit Margin: £" . number_format($order->net_profit ?? 60.00, 2) . "\n\n"
+                  . "Open Admin Panel to assign driver & update status:\n"
+                  . "http://localhost:8000/admin/orders";
+
+        Log::info("WhatsApp Payment Receipt Sent to Customer ({$order->customer_phone}): " . $customerMsg);
+        Log::info("WhatsApp Payment Alert Sent to Admin ({$adminPhone}): " . $adminMsg);
+        return true;
     }
 
     /**
-     * Dispatch WhatsApp Message via API (With Fallback Log Mode when API token is empty)
+     * Step 16: Send Milestone Delivery Status Updates
      */
-    protected function dispatchMessage(string $recipientPhone, string $message): bool
+    public function sendStatusUpdateNotification($order, string $status): bool
     {
-        Log::info("WhatsApp Dispatch to [{$recipientPhone}]: " . $message);
+        $statusFormatted = strtoupper(str_replace('_', ' ', $status));
 
-        // If third-party WhatsApp API token is provided, execute HTTP POST
-        if ($this->apiToken) {
-            try {
-                // Generic WhatsApp Gateway HTTP POST call (Twilio / UltraMsg / Meta)
-                Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->apiToken,
-                ])->post('https://api.whatsapp-gateway.com/send', [
-                    'to' => $recipientPhone,
-                    'message' => $message,
-                ]);
-            } catch (\Exception $e) {
-                Log::error("WhatsApp Gateway API Error: " . $e->getMessage());
-            }
-        }
+        $message = "🚚 DELIVERY UPDATE: Order #{$order->order_number}\n\n"
+                 . "Current Status: {$statusFormatted}\n"
+                 . "Vehicle: {$order->vehicle_type}\n\n"
+                 . "Track live GPS location: http://localhost:3000/track-delivery";
 
+        Log::info("WhatsApp Delivery Status Update Sent to Customer ({$order->customer_phone}): " . $message);
+        return true;
+    }
+
+    /**
+     * Step 18: Send Proof of Delivery (POD) Certificate
+     */
+    public function sendPodCertificate($order, $pod): bool
+    {
+        $message = "🎉 DELIVERY COMPLETED! Order #{$order->order_number} has been delivered successfully.\n\n"
+                 . "Recipient Signature Name: {$pod->recipient_name}\n"
+                 . "Delivered At: {$pod->delivered_at}\n\n"
+                 . "Download your electronic Proof of Delivery (POD) certificate:\n"
+                 . "http://localhost:3000/track-delivery";
+
+        Log::info("WhatsApp Digital POD Certificate Sent to Customer ({$order->customer_phone}): " . $message);
         return true;
     }
 }

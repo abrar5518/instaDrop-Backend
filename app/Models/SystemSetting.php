@@ -13,8 +13,11 @@ class SystemSetting extends Model
 
     protected $fillable = [
         'business_name',
+        'hotline_phone',
+        'support_email',
+        'office_address',
         'admin_whatsapp_number',
-        'admin_notification_email',
+        'opening_hours',
         'currency_code',
         'vat_rate',
         'whatsapp_api_token',

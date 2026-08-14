@@ -8,22 +8,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+        }
     </style>
 </head>
 <body class="bg-[#0a192f] text-slate-100 min-h-screen flex items-center justify-center p-4 sm:p-6">
-    <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8">
+    <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8">
         
         <!-- Header -->
-        <div className="flex items-center justify-between border-b border-slate-800 pb-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-6">
             <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#c6ff00] bg-[#c6ff00]/10 px-3 py-1 rounded-full border border-[#c6ff00]/30">
+                <span class="text-xs font-bold uppercase tracking-wider text-[#c6ff00] bg-[#c6ff00]/10 px-3 py-1 rounded-full border border-[#c6ff00]/30">
                     INSTADROP SECURE PAYMENT
                 </span>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white font-display mt-2">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white font-display mt-2">
                     Invoice Checkout
                 </h1>
             </div>
-            <div className="text-right text-xs text-slate-400">
+            <div class="text-right text-xs text-slate-400">
                 <p>Invoice #: <strong class="text-white">{{ $invoice['invoice_number'] ?? 'INV-2026-001' }}</strong></p>
                 <p>Date: {{ date('d M Y') }}</p>
             </div>
@@ -31,20 +35,26 @@
 
         <!-- Order Summary Details -->
         <div class="bg-slate-950/70 rounded-2xl p-6 border border-slate-800 space-y-4 text-xs">
-            <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Delivery Summary</h3>
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-bold text-white">Delivery Summary</h3>
+                <!-- PDF Download Action Button -->
+                <button onclick="window.print()" class="no-print text-[#c6ff00] hover:underline font-bold text-xs flex items-center gap-1">
+                    📥 Download PDF Invoice Receipt
+                </button>
+            </div>
             
             <div class="grid grid-cols-2 gap-4 text-slate-300">
                 <div>
                     <span class="text-slate-500 block">Customer:</span>
-                    <strong class="text-white">{{ $invoice['customer_name'] ?? 'Customer' }}</strong>
+                    <strong class="text-white">{{ $invoice['customer_name'] ?? 'Sarah Mitchell' }}</strong>
                 </div>
                 <div>
                     <span class="text-slate-500 block">Vehicle:</span>
-                    <strong class="text-[#c6ff00]">{{ $invoice['vehicle_type'] ?? 'Dedicated Van' }}</strong>
+                    <strong class="text-[#c6ff00]">{{ $invoice['vehicle_type'] ?? 'Luton Tail-Lift Van' }}</strong>
                 </div>
                 <div class="col-span-2">
                     <span class="text-slate-500 block">Pickup & Delivery Route:</span>
-                    <strong class="text-white">{{ $invoice['pickup_address'] ?? 'Manchester' }} ➔ {{ $invoice['delivery_address'] ?? 'London' }}</strong>
+                    <strong class="text-white">{{ $invoice['pickup_address'] ?? 'Manchester (M1 1AE)' }} ➔ {{ $invoice['delivery_address'] ?? 'London (SW1A 1AA)' }}</strong>
                 </div>
             </div>
 
@@ -66,7 +76,7 @@
         </div>
 
         <!-- Payment Form -->
-        <form action="/api/v1/payments/process" method="POST" class="space-y-6">
+        <form action="/api/v1/payments/process" method="POST" class="no-print space-y-6">
             <input type="hidden" name="payment_token" value="{{ $invoice['payment_token'] ?? 'PAY-DEMO' }}">
             <input type="hidden" name="payment_method" value="credit_card">
 

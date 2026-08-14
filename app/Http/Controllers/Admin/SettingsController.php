@@ -11,11 +11,14 @@ class SettingsController extends Controller
     public function index()
     {
         $setting = SystemSetting::firstOrCreate([], [
-            'business_name' => 'InstaDrop Courier Services Ltd',
+            'business_name'         => 'InstaDrop Courier Services Ltd',
+            'hotline_phone'         => '0800 123 4455',
+            'support_email'         => 'dispatch@instadrop.co.uk',
+            'office_address'        => '100 Pall Mall, St. James\'s, London, SW1Y 5NQ',
             'admin_whatsapp_number' => '+448001234455',
-            'admin_notification_email' => 'dispatch@instadrop.co.uk',
-            'currency_code' => 'GBP',
-            'vat_rate' => 20.00,
+            'opening_hours'         => '24/7 Dispatch Desk • 365 Days a Year',
+            'currency_code'         => 'GBP',
+            'vat_rate'              => 20.00,
         ]);
 
         return view('admin.settings.index', compact('setting'));
@@ -25,8 +28,11 @@ class SettingsController extends Controller
     {
         $validated = $request->validate([
             'business_name'            => 'required|string|max:100',
+            'hotline_phone'            => 'required|string|max:50',
+            'support_email'            => 'required|email|max:100',
+            'office_address'           => 'required|string|max:255',
             'admin_whatsapp_number'    => 'required|string|max:50',
-            'admin_notification_email' => 'required|email|max:100',
+            'opening_hours'            => 'required|string|max:100',
             'currency_code'            => 'required|string|max:10',
             'vat_rate'                 => 'required|numeric|min:0|max:100',
             'whatsapp_api_token'       => 'nullable|string',
@@ -41,6 +47,6 @@ class SettingsController extends Controller
             SystemSetting::create($validated);
         }
 
-        return redirect()->back()->with('success', 'System settings updated successfully.');
+        return redirect()->back()->with('success', 'System business contact settings updated successfully. All website contact links updated!');
     }
 }

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\SettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,6 +13,9 @@ use App\Http\Controllers\Api\PaymentController;
 */
 
 Route::prefix('v1')->group(function () {
+    // Public System & Business Contact Settings
+    Route::get('/settings', [SettingController::class, 'show']);
+
     // Public Quote Submission from Next.js Frontend
     Route::post('/quotes', [QuoteController::class, 'store']);
 

@@ -12,6 +12,12 @@ let currentSettings = {
   opening_hours: '24/7 Dispatch Desk • 365 Days a Year',
   currency_code: 'GBP',
   vat_rate: 20.00,
+  mail_host: 'smtp.hostinger.com',
+  mail_port: '587',
+  mail_username: 'dispatch@instadrop.co.uk',
+  mail_password: '',
+  mail_encryption: 'tls',
+  mail_from_address: 'dispatch@instadrop.co.uk'
 };
 
 const dummyQuotes = [
@@ -136,6 +142,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (path === '/api/v1/quotes' && req.method === 'POST') {
+    console.log(`📧 HTML EMAIL DISPATCHED: Admin New Quote Alert sent to ${currentSettings.support_email}!`);
     res.writeHead(201, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       success: true,
@@ -148,6 +155,7 @@ const server = http.createServer((req, res) => {
 
   if (path === '/api/v1/payments/process' && req.method === 'POST') {
     dummyQuotes[0].payment_status = 'paid';
+    console.log(`📧 HTML EMAIL DISPATCHED: Payment Receipt sent to Admin (${currentSettings.support_email}) and Customer!`);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       success: true,
@@ -204,7 +212,6 @@ const server = http.createServer((req, res) => {
         <div class="text-[10px] text-slate-400 border-t border-slate-800 pt-4">InstaDrop Admin v2.0 • Executive Desk</div>
       </aside>
       <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <!-- TOP CONTROL BAR HEADER -->
         <header class="bg-white border-b border-slate-200/80 px-8 py-4 flex items-center justify-between gap-4 shrink-0 shadow-xs z-10">
           <div class="relative max-w-md w-full">
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -215,7 +222,7 @@ const server = http.createServer((req, res) => {
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span class="text-[11px] font-bold">DISPATCH SYSTEM ONLINE</span>
             </div>
-            <div class="hidden sm:block text-slate-500 font-medium">Friday, 14 Aug 2026</div>
+            <div class="hidden sm:block text-slate-500 font-medium">Saturday, 22 Aug 2026</div>
             <div class="w-8 h-8 rounded-full bg-[#0a192f] text-[#c6ff00] flex items-center justify-center font-bold text-xs shadow-xs">AD</div>
           </div>
         </header>
@@ -356,7 +363,7 @@ const server = http.createServer((req, res) => {
     `);
   }
 
-  // 3. SINGLE QUOTE DETAIL PAGE WITH DYNAMIC NET PROFIT BADGE & 1-CLICK CLIPBOARD BUTTONS
+  // 3. SINGLE QUOTE DETAIL PAGE
   else if (path.startsWith('/admin/quotes/')) {
     const parts = path.split('/');
     const quoteId = parseInt(parts[parts.length - 1] || '1', 10);
@@ -487,7 +494,7 @@ const server = http.createServer((req, res) => {
     `);
   }
 
-  // 4. Orders Dashboard with Interactive Status Filter Tabs & Delivery Progress Stepper
+  // 4. Orders Dashboard
   else if (path === '/admin/orders') {
     res.writeHead(200);
     res.end(`
@@ -575,71 +582,111 @@ const server = http.createServer((req, res) => {
     `);
   }
 
-  // 5. System Settings
+  // 5. System Settings with SMTP Credentials UI
   else if (path === '/admin/settings') {
     res.writeHead(200);
     res.end(`
       ${getLayoutHeader('settings')}
       <div class="max-w-4xl mx-auto space-y-8">
         <div>
-          <h1 class="text-2xl font-extrabold text-slate-900 font-display">System Settings & Website Contact Management</h1>
-          <p class="text-xs text-slate-500">Edit business name, phone hotline, email, office address, and WhatsApp number. All updates immediately reflect across the frontend website.</p>
+          <h1 class="text-2xl font-extrabold text-slate-900 font-display">System Settings & SMTP Email Management</h1>
+          <p class="text-xs text-slate-500">Manage public contact info, SMTP email server credentials, WhatsApp hotline, and payment API keys.</p>
         </div>
 
-        <form action="/admin/settings/update" method="POST" onsubmit="alert('System Business Settings Saved! All Website Contact details updated live.'); return false;" class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 text-xs shadow-xs">
-          <div class="border-b border-slate-100 pb-4">
-            <h3 class="text-sm font-extrabold text-slate-900 font-display">Website Public Contact Information</h3>
-            <p class="text-xs text-slate-500">These details are dynamically displayed on Header, Footer, Contact page, and Call buttons.</p>
+        <form action="/admin/settings/update" method="POST" onsubmit="alert('System Settings and SMTP Mail Server Credentials Saved! Live emails active.'); return false;" class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-8 text-xs shadow-xs">
+          
+          <!-- 1. PUBLIC CONTACT DETAILS -->
+          <div class="space-y-4">
+            <div class="border-b border-slate-100 pb-3">
+              <h3 class="text-sm font-extrabold text-slate-900 font-display">Website Public Contact Information</h3>
+              <p class="text-xs text-slate-500">These details are dynamically displayed on Header, Footer, Contact page, and Call buttons.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">Business / Company Name</label>
+                <input type="text" value="${currentSettings.business_name}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">Hotline Phone Number (Header & Footer)</label>
+                <input type="text" value="${currentSettings.hotline_phone}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-bold">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">Support / Admin Notification Email</label>
+                <input type="email" value="${currentSettings.support_email}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">Admin Business WhatsApp Hotline</label>
+                <input type="text" value="${currentSettings.admin_whatsapp_number}" class="w-full bg-slate-50 border border-[#0a192f] rounded-xl px-4 py-3 text-[#0a192f] font-extrabold">
+              </div>
+
+              <div class="sm:col-span-2 space-y-1.5">
+                <label class="block font-bold text-slate-700">Full Head Office Address</label>
+                <input type="text" value="${currentSettings.office_address}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">Opening Hours / Availability</label>
+                <input type="text" value="${currentSettings.opening_hours}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">VAT Rate (%)</label>
+                <input type="text" value="${currentSettings.vat_rate}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div class="space-y-1.5">
-              <label class="block font-bold text-slate-700">Business / Company Name</label>
-              <input type="text" value="${currentSettings.business_name}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="block font-bold text-slate-700">Hotline Phone Number (Header & Footer)</label>
-              <input type="text" value="${currentSettings.hotline_phone}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-bold">
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="block font-bold text-slate-700">Support Email Address</label>
-              <input type="email" value="${currentSettings.support_email}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="block font-bold text-slate-700">Admin Business WhatsApp Hotline</label>
-              <input type="text" value="${currentSettings.admin_whatsapp_number}" class="w-full bg-slate-50 border border-[#0a192f] rounded-xl px-4 py-3 text-[#0a192f] font-extrabold">
-            </div>
-
-            <div class="sm:col-span-2 space-y-1.5">
-              <label class="block font-bold text-slate-700">Full Head Office Address</label>
-              <input type="text" value="${currentSettings.office_address}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="block font-bold text-slate-700">Opening Hours / Availability</label>
-              <input type="text" value="${currentSettings.opening_hours}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
-            </div>
-
-            <div class="space-y-1.5">
-              <label class="block font-bold text-slate-700">VAT Rate (%)</label>
-              <input type="text" value="${currentSettings.vat_rate}" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
-            </div>
-          </div>
-
+          <!-- 2. LIVE SMTP MAIL SERVER CONFIGURATION -->
           <div class="border-t border-slate-100 pt-6 space-y-4">
-            <h3 class="text-sm font-extrabold text-slate-900 font-display">3rd-Party API Integrations (Optional)</h3>
-            <div class="space-y-1.5">
-              <label class="block font-bold text-slate-600">WhatsApp Gateway API Token</label>
-              <input type="text" placeholder="Paste Twilio / UltraMsg / Meta API Token here when ready" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900">
+            <div class="border-b border-slate-100 pb-3">
+              <span class="text-[10px] font-black text-blue-900 bg-blue-100 px-3 py-1 rounded-full uppercase tracking-wider">LIVE EMAIL SERVER CONFIG</span>
+              <h3 class="text-sm font-extrabold text-slate-900 font-display mt-2">SMTP Mail Server Credentials</h3>
+              <p class="text-xs text-slate-500">Configure Hostinger, cPanel Webmail, Gmail, or Mailgun credentials to send real inquiry emails to Admin and receipts to customers.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">SMTP Mail Host</label>
+                <input type="text" value="${currentSettings.mail_host}" placeholder="smtp.hostinger.com" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">SMTP Mail Port</label>
+                <input type="text" value="${currentSettings.mail_port}" placeholder="587 or 465" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">SMTP Username / Email</label>
+                <input type="text" value="${currentSettings.mail_username}" placeholder="dispatch@instadrop.co.uk" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">SMTP Password</label>
+                <input type="password" value="••••••••••••" placeholder="Password" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">Mail Encryption</label>
+                <select class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+                  <option value="tls" selected>TLS (Port 587)</option>
+                  <option value="ssl">SSL (Port 465)</option>
+                </select>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block font-bold text-slate-700">Sender "From" Email Address</label>
+                <input type="email" value="${currentSettings.mail_from_address}" placeholder="dispatch@instadrop.co.uk" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-medium">
+              </div>
             </div>
           </div>
 
           <div class="pt-4">
             <button type="submit" class="w-full py-4 rounded-2xl bg-[#0a192f] hover:bg-[#051329] text-white font-extrabold text-xs transition-all shadow-md">
-              ⚡ Save Business Settings & Update Website Contact Details
+              ⚡ Save All Settings & Apply Live SMTP Mail Server Credentials
             </button>
           </div>
         </form>

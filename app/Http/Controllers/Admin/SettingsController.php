@@ -19,6 +19,11 @@ class SettingsController extends Controller
             'opening_hours'         => '24/7 Dispatch Desk • 365 Days a Year',
             'currency_code'         => 'GBP',
             'vat_rate'              => 20.00,
+            'mail_host'             => 'smtp.hostinger.com',
+            'mail_port'             => '587',
+            'mail_username'         => 'dispatch@instadrop.co.uk',
+            'mail_encryption'       => 'tls',
+            'mail_from_address'     => 'dispatch@instadrop.co.uk',
         ]);
 
         return view('admin.settings.index', compact('setting'));
@@ -35,6 +40,12 @@ class SettingsController extends Controller
             'opening_hours'            => 'required|string|max:100',
             'currency_code'            => 'required|string|max:10',
             'vat_rate'                 => 'required|numeric|min:0|max:100',
+            'mail_host'                => 'nullable|string|max:100',
+            'mail_port'                => 'nullable|string|max:10',
+            'mail_username'            => 'nullable|string|max:100',
+            'mail_password'            => 'nullable|string',
+            'mail_encryption'          => 'nullable|string|max:10',
+            'mail_from_address'        => 'nullable|email|max:100',
             'whatsapp_api_token'       => 'nullable|string',
             'stripe_public_key'        => 'nullable|string',
             'stripe_secret_key'        => 'nullable|string',
@@ -47,6 +58,6 @@ class SettingsController extends Controller
             SystemSetting::create($validated);
         }
 
-        return redirect()->back()->with('success', 'System business contact settings updated successfully. All website contact links updated!');
+        return redirect()->back()->with('success', 'System business settings and SMTP Mail credentials updated successfully!');
     }
 }

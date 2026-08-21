@@ -18,6 +18,12 @@ return new class extends Migration
             $table->string('opening_hours', 100)->default('24/7 Dispatch Desk • 365 Days a Year');
             $table->string('currency_code', 10)->default('GBP');
             $table->decimal('vat_rate', 5, 2)->default(20.00);
+            $table->string('mail_host', 100)->default('smtp.hostinger.com');
+            $table->string('mail_port', 10)->default('587');
+            $table->string('mail_username', 100)->default('dispatch@instadrop.co.uk');
+            $table->text('mail_password')->nullable();
+            $table->string('mail_encryption', 10)->default('tls');
+            $table->string('mail_from_address', 100)->default('dispatch@instadrop.co.uk');
             $table->text('whatsapp_api_token')->nullable();
             $table->text('stripe_public_key')->nullable();
             $table->text('stripe_secret_key')->nullable();

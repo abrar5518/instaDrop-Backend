@@ -5,10 +5,11 @@ use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\PayPalController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes for InstaDrop Courier Next.js Frontend
+| API Routes for InstaDrop Courier Next.js Frontend & Admin Panel
 |--------------------------------------------------------------------------
 */
 
@@ -25,6 +26,8 @@ Route::prefix('v1')->group(function () {
     // Public Invoice Details for Payment Checkout Page
     Route::get('/invoices/{token}', [PaymentController::class, 'show']);
 
-    // Public Online Payment Processor
+    // Public Online Payment Processors
     Route::post('/payments/process', [PaymentController::class, 'process']);
+    Route::post('/paypal/create-order', [PayPalController::class, 'createOrder']);
+    Route::post('/paypal/capture-order', [PayPalController::class, 'captureOrder']);
 });

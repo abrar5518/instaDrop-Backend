@@ -13,6 +13,8 @@
             body { background: white !important; color: black !important; }
         }
     </style>
+    <!-- OFFICIAL PAYPAL JS SDK INTEGRATION -->
+    <script src="https://www.paypal.com/sdk/js?client-id=BAA4lZysh2qOP6owh18e_QDB4cOAMTtaCqu56DkwQATYEdnWeElOcIZ435-LpKJiYQhP2HhZiokONbViXA&currency=GBP"></script>
 </head>
 <body class="bg-[#0a192f] text-slate-100 min-h-screen flex items-center justify-center p-4 sm:p-6">
     <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8">
@@ -28,97 +30,98 @@
                 </h1>
             </div>
             <div class="text-right text-xs text-slate-400">
-                <p>Invoice #: <strong class="text-white">{{ $invoice['invoice_number'] ?? 'INV-2026-001' }}</strong></p>
-                <p>Date: {{ date('d M Y') }}</p>
+                <p>Invoice #: <strong class="text-white">{{ $invoice->invoice_number ?? 'INV-2026-8801' }}</strong></p>
+                <p>Status: <strong id="payment-status-badge" class="text-emerald-400 font-bold uppercase">{{ strtoupper($order->payment_status ?? 'UNPAID') }}</strong></p>
             </div>
         </div>
 
-        <!-- Order Summary Details -->
+        <!-- Order Summary Card -->
         <div class="bg-slate-950/70 rounded-2xl p-6 border border-slate-800 space-y-4 text-xs">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                 <h3 class="text-sm font-bold text-white">Delivery Summary</h3>
-                <!-- PDF Download Action Button -->
                 <button onclick="window.print()" class="no-print text-[#c6ff00] hover:underline font-bold text-xs flex items-center gap-1">
                     📥 Download PDF Invoice Receipt
                 </button>
             </div>
-            
             <div class="grid grid-cols-2 gap-4 text-slate-300">
                 <div>
                     <span class="text-slate-500 block">Customer:</span>
-                    <strong class="text-white">{{ $invoice['customer_name'] ?? 'Sarah Mitchell' }}</strong>
+                    <strong class="text-white">{{ $order->customer_name ?? 'Sarah Mitchell' }}</strong>
                 </div>
                 <div>
                     <span class="text-slate-500 block">Vehicle:</span>
-                    <strong class="text-[#c6ff00]">{{ $invoice['vehicle_type'] ?? 'Luton Tail-Lift Van' }}</strong>
+                    <strong class="text-[#c6ff00] capitalize">{{ str_replace('_', ' ', $order->vehicle_type ?? 'Luton Tail-Lift Van') }}</strong>
                 </div>
                 <div class="col-span-2">
                     <span class="text-slate-500 block">Pickup & Delivery Route:</span>
-                    <strong class="text-white">{{ $invoice['pickup_address'] ?? 'Manchester (M1 1AE)' }} ➔ {{ $invoice['delivery_address'] ?? 'London (SW1A 1AA)' }}</strong>
+                    <strong class="text-white">{{ $order->pickup_address ?? 'M1 1AE (Manchester)' }} ➔ {{ $order->delivery_address ?? 'SW1A 1AA (London)' }}</strong>
                 </div>
             </div>
 
-            <!-- Price Breakdown -->
             <div class="border-t border-slate-800 pt-4 space-y-2 font-semibold">
                 <div class="flex justify-between text-slate-400">
                     <span>Subtotal:</span>
-                    <span>£{{ number_format($invoice['subtotal'] ?? 150.00, 2) }}</span>
+                    <span>£{{ number_format(($order->total_amount ?? 180) / 1.2, 2) }}</span>
                 </div>
                 <div class="flex justify-between text-slate-400">
                     <span>VAT (20%):</span>
-                    <span>£{{ number_format($invoice['vat_amount'] ?? 30.00, 2) }}</span>
+                    <span>£{{ number_format(($order->total_amount ?? 180) - (($order->total_amount ?? 180) / 1.2), 2) }}</span>
                 </div>
                 <div class="flex justify-between text-base font-extrabold text-white pt-2 border-t border-slate-800">
                     <span>Total Amount Due:</span>
-                    <span class="text-[#c6ff00]">£{{ number_format($invoice['total_amount'] ?? 180.00, 2) }}</span>
+                    <span class="text-[#c6ff00]">£{{ number_format($order->total_amount ?? 180, 2) }}</span>
                 </div>
             </div>
         </div>
 
-        <!-- Payment Form -->
-        <form action="/api/v1/payments/process" method="POST" class="no-print space-y-6">
-            <input type="hidden" name="payment_token" value="{{ $invoice['payment_token'] ?? 'PAY-DEMO' }}">
-            <input type="hidden" name="payment_method" value="credit_card">
-
-            <div class="space-y-4">
-                <label class="block text-xs font-bold text-slate-300">Select Payment Method</label>
-                <div class="grid grid-cols-2 gap-3 text-xs font-bold">
-                    <label class="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-[#c6ff00] bg-[#c6ff00]/10 text-white cursor-pointer">
-                        <input type="radio" name="method" checked class="accent-[#c6ff00]">
-                        <span>Credit / Debit Card</span>
-                    </label>
-                    <label class="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 cursor-pointer">
-                        <input type="radio" name="method" class="accent-[#c6ff00]">
-                        <span>Stripe / Apple Pay</span>
-                    </label>
-                </div>
-
-                <div class="space-y-3 pt-2">
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-400 mb-1">Card Number</label>
-                        <input type="text" placeholder="4242 •••• •••• 4242" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#c6ff00]">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-400 mb-1">Expiry Date</label>
-                            <input type="text" placeholder="MM / YY" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#c6ff00]">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-400 mb-1">CVC Code</label>
-                            <input type="text" placeholder="123" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-[#c6ff00]">
-                        </div>
-                    </div>
-                </div>
+        <!-- OFFICIAL PAYPAL JS BUTTONS & CARD CONTAINER -->
+        <div class="no-print space-y-6">
+            <div class="border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-bold text-white">Pay via PayPal or Debit/Credit Card</h3>
+                <p class="text-xs text-slate-400">256-bit SSL encrypted instant payment capture.</p>
             </div>
 
-            <button type="submit" class="w-full py-4 rounded-2xl bg-[#c6ff00] hover:bg-[#b2e600] text-[#0a192f] font-extrabold text-sm transition-all shadow-lg shadow-[#c6ff00]/20 flex items-center justify-center gap-2">
-                <span>Pay £{{ number_format($invoice['total_amount'] ?? 180.00, 2) }} & Confirm Booking</span>
-            </button>
-        </form>
+            <!-- PayPal Render Container -->
+            <div id="paypal-button-container" class="w-full"></div>
 
-        <p class="text-[10px] text-center text-slate-500">
-            🔒 256-Bit SSL Encrypted Payment • Free £50,000 Goods-in-Transit Insurance Included
-        </p>
+            <script>
+                if (typeof paypal !== 'undefined') {
+                    paypal.Buttons({
+                        style: {
+                            layout: 'vertical',
+                            color:  'gold',
+                            shape:  'rect',
+                            label:  'paypal'
+                        },
+                        createOrder: function(data, actions) {
+                            return actions.order.create({
+                                purchase_units: [{
+                                    amount: {
+                                        currency_code: 'GBP',
+                                        value: '{{ number_format($order->total_amount ?? 180, 2, ".", "") }}'
+                                    }
+                                }]
+                            });
+                        },
+                        onApprove: function(data, actions) {
+                            return actions.order.capture().then(function(details) {
+                                document.getElementById('payment-status-badge').innerText = 'PAID';
+                                document.getElementById('payment-status-badge').className = 'text-emerald-400 font-bold uppercase';
+                                alert('Payment Successful! Thank you ' + details.payer.name.given_name + '. Order marked as PAID in Admin Panel.');
+                                fetch('/api/v1/paypal/capture-order', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        paypal_order_id: data.orderID,
+                                        order_token: '{{ $order->order_number ?? "PAY-DEMO" }}'
+                                    })
+                                });
+                            });
+                        }
+                    }).render('#paypal-button-container');
+                }
+            </script>
+        </div>
 
     </div>
 </body>

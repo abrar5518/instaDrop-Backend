@@ -3,8 +3,8 @@
 @section('content')
 <div class="max-w-4xl mx-auto space-y-8">
     <div>
-        <h1 class="text-2xl font-extrabold text-slate-900 font-display">System Settings & SMTP Email Management</h1>
-        <p class="text-xs text-slate-500">Manage public contact info, SMTP email server credentials, WhatsApp hotline, and payment API keys.</p>
+        <h1 class="text-2xl font-extrabold text-slate-900 font-display">System Settings & Payment Integration</h1>
+        <p class="text-xs text-slate-500">Manage public contact info, SMTP email server credentials, PayPal keys, and WhatsApp hotline.</p>
     </div>
 
     <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-8 text-xs shadow-xs">
@@ -57,7 +57,36 @@
             </div>
         </div>
 
-        <!-- 2. SMTP EMAIL SERVER CONFIGURATION (For Admin Inquiry Alerts & Customer Emails) -->
+        <!-- 2. PAYPAL REST API CREDENTIALS CONFIGURATION -->
+        <div class="border-t border-slate-100 pt-6 space-y-4">
+            <div class="border-b border-slate-100 pb-3">
+                <span class="text-[10px] font-black text-amber-900 bg-amber-100 px-3 py-1 rounded-full uppercase tracking-wider">OFFICIAL PAYPAL REST INTEGRATION</span>
+                <h3 class="text-sm font-extrabold text-slate-900 font-display mt-2">PayPal REST API Credentials</h3>
+                <p class="text-xs text-slate-500">Configure Client ID & Secret Key provided by client for online PayPal checkout.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+                <div class="space-y-1.5">
+                    <label class="block font-bold text-slate-700">PayPal Client ID</label>
+                    <input type="text" name="paypal_client_id" value="{{ $setting->paypal_client_id ?? 'BAA4lZysh2qOP6owh18e_QDB4cOAMTtaCqu56DkwQATYEdnWeElOcIZ435-LpKJiYQhP2HhZiokONbViXA' }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-mono text-xs">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block font-bold text-slate-700">PayPal Client Secret</label>
+                    <input type="password" name="paypal_secret" value="{{ $setting->paypal_secret ?? 'EK2K4d8PjmiYJdSWsdt3Y7LMC5YCLnoaYXCnSUHuTatxppMgLo7YyPQ-WqMAkCQw1_zDQJhTsed6KgE7' }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-mono text-xs">
+                </div>
+
+                <div class="space-y-1.5 sm:w-1/2">
+                    <label class="block font-bold text-slate-700">PayPal Gateway Mode</label>
+                    <select name="paypal_mode" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-bold">
+                        <option value="sandbox" {{ ($setting->paypal_mode ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Sandbox (Test Payments)</option>
+                        <option value="live" {{ ($setting->paypal_mode ?? '') === 'live' ? 'selected' : '' }}>Live (Real Production Payments)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. SMTP EMAIL SERVER CONFIGURATION -->
         <div class="border-t border-slate-100 pt-6 space-y-4">
             <div class="border-b border-slate-100 pb-3">
                 <span class="text-[10px] font-black text-blue-900 bg-blue-100 px-3 py-1 rounded-full uppercase tracking-wider">LIVE EMAIL SERVER CONFIG</span>
@@ -101,31 +130,9 @@
             </div>
         </div>
 
-        <!-- 3. OTHER API INTEGRATIONS -->
-        <div class="border-t border-slate-100 pt-6 space-y-4">
-            <h3 class="text-sm font-extrabold text-slate-900 font-display">WhatsApp & Payment Gateways (Optional)</h3>
-
-            <div class="space-y-1.5">
-                <label class="block font-bold text-slate-600">WhatsApp Gateway API Token</label>
-                <input type="text" name="whatsapp_api_token" value="{{ $setting->whatsapp_api_token }}" placeholder="Paste Twilio / UltraMsg / Meta API Token here when ready" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900">
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="space-y-1.5">
-                    <label class="block font-bold text-slate-600">Stripe Public Key</label>
-                    <input type="text" name="stripe_public_key" value="{{ $setting->stripe_public_key }}" placeholder="pk_test_..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900">
-                </div>
-
-                <div class="space-y-1.5">
-                    <label class="block font-bold text-slate-600">Stripe Secret Key</label>
-                    <input type="password" name="stripe_secret_key" value="{{ $setting->stripe_secret_key }}" placeholder="sk_test_..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900">
-                </div>
-            </div>
-        </div>
-
         <div class="pt-4">
             <button type="submit" class="w-full py-4 rounded-2xl bg-[#0a192f] hover:bg-[#051329] text-white font-extrabold text-xs transition-all shadow-md">
-                ⚡ Save All Settings & Apply Live SMTP Mail Server Credentials
+                ⚡ Save All Settings & Apply Live PayPal & Email Credentials
             </button>
         </div>
     </form>

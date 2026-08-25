@@ -24,6 +24,9 @@ return new class extends Migration
             $table->text('mail_password')->nullable();
             $table->string('mail_encryption', 10)->default('tls');
             $table->string('mail_from_address', 100)->default('dispatch@instadrop.co.uk');
+            $table->text('paypal_client_id')->nullable();
+            $table->text('paypal_secret')->nullable();
+            $table->string('paypal_mode', 20)->default('sandbox');
             $table->text('whatsapp_api_token')->nullable();
             $table->text('stripe_public_key')->nullable();
             $table->text('stripe_secret_key')->nullable();

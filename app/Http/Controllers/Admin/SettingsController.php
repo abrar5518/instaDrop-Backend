@@ -24,6 +24,9 @@ class SettingsController extends Controller
             'mail_username'         => 'dispatch@instadrop.co.uk',
             'mail_encryption'       => 'tls',
             'mail_from_address'     => 'dispatch@instadrop.co.uk',
+            'paypal_client_id'     => 'BAA4lZysh2qOP6owh18e_QDB4cOAMTtaCqu56DkwQATYEdnWeElOcIZ435-LpKJiYQhP2HhZiokONbViXA',
+            'paypal_secret'        => 'EK2K4d8PjmiYJdSWsdt3Y7LMC5YCLnoaYXCnSUHuTatxppMgLo7YyPQ-WqMAkCQw1_zDQJhTsed6KgE7',
+            'paypal_mode'          => 'sandbox',
         ]);
 
         return view('admin.settings.index', compact('setting'));
@@ -46,6 +49,9 @@ class SettingsController extends Controller
             'mail_password'            => 'nullable|string',
             'mail_encryption'          => 'nullable|string|max:10',
             'mail_from_address'        => 'nullable|email|max:100',
+            'paypal_client_id'         => 'nullable|string',
+            'paypal_secret'            => 'nullable|string',
+            'paypal_mode'              => 'nullable|string|max:20',
             'whatsapp_api_token'       => 'nullable|string',
             'stripe_public_key'        => 'nullable|string',
             'stripe_secret_key'        => 'nullable|string',
@@ -58,6 +64,6 @@ class SettingsController extends Controller
             SystemSetting::create($validated);
         }
 
-        return redirect()->back()->with('success', 'System business settings and SMTP Mail credentials updated successfully!');
+        return redirect()->back()->with('success', 'System business settings, PayPal credentials, and SMTP Mail settings updated successfully!');
     }
 }

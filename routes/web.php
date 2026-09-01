@@ -7,13 +7,22 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\PodController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\AnalyticsSettingController as AdminAnalyticsController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\SEO\RobotsController;
+use App\Http\Controllers\SEO\LlmsController;
+use App\Http\Controllers\SEO\SitemapController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes — InstaDrop Courier Admin Panel & Public Checkout
+| Web Routes — InstaDrop Courier Admin Panel, SEO & Public Checkout
 |--------------------------------------------------------------------------
 */
+
+// Public SEO & AI Routes
+Route::get('/robots.txt', [RobotsController::class, 'index']);
+Route::get('/llms.txt', [LlmsController::class, 'index']);
+Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 // Public Payment Checkout Page for Customer
 Route::get('/pay/{token}', function ($token) {
@@ -48,4 +57,8 @@ Route::prefix('admin')->as('admin.')->group(function () {
     // System Settings Module
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Analytics & Tracking Pixels Settings Module
+    Route::get('/analytics', [AdminAnalyticsController::class, 'index'])->name('analytics.index');
+    Route::post('/analytics', [AdminAnalyticsController::class, 'update'])->name('analytics.update');
 });

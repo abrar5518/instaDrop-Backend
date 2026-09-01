@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\PayPalController;
+use App\Http\Controllers\Api\AnalyticsSettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\PayPalController;
 Route::prefix('v1')->group(function () {
     // Public System & Business Contact Settings
     Route::get('/settings', [SettingController::class, 'show']);
+    Route::get('/analytics-settings', [AnalyticsSettingController::class, 'show']);
 
     // Public Quote Submission from Next.js Frontend
     Route::post('/quotes', [QuoteController::class, 'store']);

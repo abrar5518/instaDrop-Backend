@@ -20,6 +20,21 @@ let currentSettings = {
   mail_from_address: 'dispatch@instadrop.co.uk'
 };
 
+let analyticsSettings = {
+  meta_pixel_id: '',
+  gtm_container_id: '',
+  ga4_measurement_id: '',
+  clarity_project_id: '',
+  google_search_console_code: '',
+  is_enabled: true,
+  site_name: 'InstaDrop Courier Services',
+  contact_email: 'dispatch@instadrop.co.uk',
+  contact_phone: '+44 7852 502775',
+  contact_address: '100 Pall Mall, St. James\'s, London, SW1Y 5NQ',
+  facebook_url: '',
+  instagram_url: ''
+};
+
 const dummyQuotes = [
   {
     id: 1,

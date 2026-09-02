@@ -12,8 +12,10 @@ class SettingsController extends Controller
     {
         $setting = SystemSetting::firstOrCreate([], [
             'business_name' => 'InstaDrop Courier Services Ltd',
+            'public_phone' => '0800 123 4455',
             'admin_whatsapp_number' => '+448001234455',
             'admin_notification_email' => 'dispatch@instadrop.co.uk',
+            'business_address' => 'Central Logistics Park, M25 Hub Highway, London UK',
             'currency_code' => 'GBP',
             'vat_rate' => 20.00,
         ]);
@@ -25,8 +27,10 @@ class SettingsController extends Controller
     {
         $validated = $request->validate([
             'business_name'            => 'required|string|max:100',
+            'public_phone'             => 'required|string|max:50',
             'admin_whatsapp_number'    => 'required|string|max:50',
             'admin_notification_email' => 'required|email|max:100',
+            'business_address'         => 'required|string|max:255',
             'currency_code'            => 'required|string|max:10',
             'vat_rate'                 => 'required|numeric|min:0|max:100',
             'whatsapp_api_token'       => 'nullable|string',

@@ -16,9 +16,7 @@ class EmailNotificationService
      */
     public function sendQuoteReceiptEmail(QuoteRequest $quote): bool
     {
-        Log::info("Email Dispatch [Quote Receipt] to {$quote->contact_email} for Quote #{$quote->quote_number}");
-        // Mail::to($quote->contact_email)->send(new QuoteReceiptMailable($quote));
-        return true;
+        return $this->send($quote->email, 'We received your InstaDrop quote request', "Hello {$quote->full_name},\n\nWe received quote request {$quote->quote_number}. Our dispatch team will contact you shortly.");
     }
 
     /**
@@ -27,9 +25,8 @@ class EmailNotificationService
     public function sendInvoicePaymentEmail(Invoice $invoice): bool
     {
         $order = $invoice->order;
-        Log::info("Email Dispatch [Invoice Payment Link] to {$order->customer_email} for Order #{$order->tracking_number}");
-        // Mail::to($order->customer_email)->send(new InvoicePaymentMailable($invoice));
-        return true;
+        $url = rtrim(config('app.frontend_url'), '/') . '/pay/' . $invoice->payment_token;
+        return $this->send($order->customer_email, "Invoice {$invoice->invoice_number} ready", "Hello {$order->customer_name},\n\nYour InstaDrop delivery invoice is ready. Total: GBP {$invoice->total_amount}.\n\nPay securely: {$url}");
     }
 
     /**
@@ -38,9 +35,7 @@ class EmailNotificationService
     public function sendPaymentConfirmationEmail(Invoice $invoice): bool
     {
         $order = $invoice->order;
-        Log::info("Email Dispatch [Payment Receipt] to {$order->customer_email} for Invoice #{$invoice->invoice_number}");
-        // Mail::to($order->customer_email)->send(new PaymentReceiptMailable($invoice));
-        return true;
+        return $this->send($order->customer_email, "Payment received - {$invoice->invoice_number}", "Hello {$order->customer_name},\n\nWe received your payment for invoice {$invoice->invoice_number}. Tracking reference: {$order->tracking_number}.");
     }
 
     /**
@@ -48,8 +43,24 @@ class EmailNotificationService
      */
     public function sendPodEmail(Order $order, Pod $pod): bool
     {
-        Log::info("Email Dispatch [POD Attachment] to {$order->customer_email} for Order #{$order->tracking_number}");
-        // Mail::to($order->customer_email)->send(new PodMailable($order, $pod));
-        return true;
+        return $this->send($order->customer_email, "Proof of delivery - {$order->tracking_number}", "Your delivery was received by {$pod->recipient_name} at {$pod->delivered_at}.");
+    }
+
+    public function sendAdminInquiryEmail(string $name, string $email, string $type): bool
+    {
+        $admin = \App\Models\SystemSetting::first()?->admin_notification_email;
+        return $admin ? $this->send($admin, "New InstaDrop {$type} submission", "New {$type} submission from {$name} ({$email}). Review it in the admin panel.") : false;
+    }
+
+    private function send(string $to, string $subject, string $body): bool
+    {
+        try {
+            Mail::raw($body, fn ($message) => $message->to($to)->subject($subject));
+            Log::info('Email sent', ['to' => $to, 'subject' => $subject]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Email send failed', ['to' => $to, 'message' => $e->getMessage()]);
+            return false;
+        }
     }
 }

@@ -4,10 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use App\Services\PayPalService;
+use App\Services\EmailNotificationService;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
+    public function __construct(private PayPalService $payPalService)
+    {
+    }
     /**
      * Fetch invoice details by payment token.
      */
@@ -37,18 +44,19 @@ class PaymentController extends Controller
             'total_amount' => $invoice->total_amount,
             'status' => $invoice->status,
             'paid_at' => $invoice->paid_at,
+            'payment_token' => $invoice->payment_token,
+            'paypal_client_id' => config('services.paypal.client_id'),
+            'currency' => 'GBP',
         ]);
     }
 
     /**
      * Process online payment transaction.
      */
-    public function process(Request $request)
+    public function createPayPalOrder(Request $request)
     {
         $validated = $request->validate([
             'payment_token' => 'required|string',
-            'payment_method' => 'required|string', // stripe, credit_card
-            'card_token' => 'nullable|string',
         ]);
 
         $invoice = Invoice::with('order')
@@ -62,37 +70,32 @@ class PaymentController extends Controller
             ], 404);
         }
 
+        abort_if($invoice->status === 'paid', 409, 'Invoice has already been paid.');
+        $order = $this->payPalService->createOrder($invoice->invoice_number, number_format((float) $invoice->total_amount, 2, '.', ''));
+        return response()->json(['success' => true, 'order_id' => $order['id']]);
+    }
+
+    public function capturePayPalOrder(Request $request, EmailNotificationService $email, WhatsAppService $whatsApp)
+    {
+        $validated = $request->validate(['payment_token' => 'required|string', 'paypal_order_id' => 'required|string|max:100']);
+        $invoice = Invoice::with('order')->where('payment_token', $validated['payment_token'])->firstOrFail();
         if ($invoice->status === 'paid') {
-            return response()->json([
-                'success' => true,
-                'message' => 'Invoice has already been paid.',
-                'invoice_number' => $invoice->invoice_number,
-            ]);
+            return response()->json(['success' => true, 'message' => 'Invoice has already been paid.', 'invoice_number' => $invoice->invoice_number]);
         }
 
-        // Simulate successful payment transaction
-        $transactionId = 'TXN-' . strtoupper(substr(md5(uniqid()), 0, 10));
+        $capture = $this->payPalService->captureOrder($validated['paypal_order_id']);
+        $captureData = data_get($capture, 'purchase_units.0.payments.captures.0');
+        $amount = data_get($captureData, 'amount.value');
+        $currency = data_get($captureData, 'amount.currency_code');
+        abort_unless(($capture['status'] ?? null) === 'COMPLETED' && $currency === 'GBP' && bccomp((string) $amount, (string) $invoice->total_amount, 2) === 0, 422, 'PayPal payment could not be verified.');
 
-        $invoice->update([
-            'status' => 'paid',
-            'payment_method' => $validated['payment_method'],
-            'payment_transaction_id' => $transactionId,
-            'paid_at' => now(),
-        ]);
+        DB::transaction(function () use ($invoice, $captureData) {
+            $invoice->update(['status' => 'paid', 'payment_method' => 'paypal', 'payment_transaction_id' => $captureData['id'], 'paid_at' => now()]);
+            $invoice->order?->update(['status' => 'paid']);
+        });
+        $email->sendPaymentConfirmationEmail($invoice->fresh('order'));
+        $whatsApp->sendPaymentConfirmation($invoice->fresh('order'));
 
-        // Update parent order status
-        if ($invoice->order) {
-            $invoice->order->update([
-                'status' => 'paid',
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment processed successfully! Confirmation sent to your email and WhatsApp.',
-            'invoice_number' => $invoice->invoice_number,
-            'transaction_id' => $transactionId,
-            'paid_at' => $invoice->paid_at->toDateTimeString(),
-        ]);
+        return response()->json(['success' => true, 'message' => 'Payment completed successfully.', 'invoice_number' => $invoice->invoice_number]);
     }
 }

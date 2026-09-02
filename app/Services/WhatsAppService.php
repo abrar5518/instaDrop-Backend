@@ -14,12 +14,16 @@ class WhatsAppService
 {
     protected string $adminNumber;
     protected ?string $apiToken;
+    protected ?string $phoneNumberId;
+    protected string $graphVersion;
 
     public function __construct()
     {
         $setting = SystemSetting::first();
-        $this->adminNumber = $setting ? $setting->admin_whatsapp_number : env('ADMIN_WHATSAPP_NUMBER', '+448001234455');
-        $this->apiToken = $setting ? $setting->whatsapp_api_token : env('WHATSAPP_API_TOKEN', null);
+        $this->adminNumber = $setting?->admin_whatsapp_number ?: (string) config('services.whatsapp.admin_number');
+        $this->apiToken = $setting?->whatsapp_api_token ?: config('services.whatsapp.access_token');
+        $this->phoneNumberId = config('services.whatsapp.phone_number_id');
+        $this->graphVersion = config('services.whatsapp.graph_version', 'v25.0');
     }
 
     /**
@@ -28,21 +32,21 @@ class WhatsAppService
      */
     public function sendQuoteAcknowledgment(QuoteRequest $quote): bool
     {
-        $message = "Hello {$quote->contact_name},\n\n"
+        $message = "Hello {$quote->full_name},\n\n"
                  . "Thank you for choosing InstaDrop Same-Day Courier! 🚚\n\n"
-                 . "We have received your delivery request (#{$quote->quote_number}) from {$quote->pickup_postcode} to {$quote->delivery_postcode}.\n\n"
-                 . "Our dispatch team is reviewing carrier rates and will contact you shortly via {$quote->preferred_contact_method}.\n\n"
+                 . "We have received your delivery request (#{$quote->quote_number}) from {$quote->collection_postcode} to {$quote->delivery_postcode}.\n\n"
+                 . "Our dispatch team is reviewing carrier rates and will contact you shortly via {$quote->contact_preference}.\n\n"
                  . "InstaDrop 24/7 Hotline: {$this->adminNumber}";
 
         // Send to Customer
-        $this->dispatchMessage($quote->contact_phone, $message);
+        $this->dispatchMessage($quote->phone, $message);
 
         // Also Notify Admin Business WhatsApp
         $adminMessage = "🔔 NEW QUOTE REQUEST (#{$quote->quote_number})\n"
-                      . "Customer: {$quote->contact_name} ({$quote->contact_phone})\n"
-                      . "Route: {$quote->pickup_postcode} -> {$quote->delivery_postcode}\n"
+                      . "Customer: {$quote->full_name} ({$quote->phone})\n"
+                      . "Route: {$quote->collection_postcode} -> {$quote->delivery_postcode}\n"
                       . "Vehicle: {$quote->vehicle_type}\n"
-                      . "Preferred Contact: {$quote->preferred_contact_method}";
+                      . "Preferred Contact: {$quote->contact_preference}";
         
         $this->dispatchMessage($this->adminNumber, $adminMessage);
 
@@ -55,7 +59,7 @@ class WhatsAppService
     public function sendQuotationAndPaymentLink(Invoice $invoice): bool
     {
         $order = $invoice->order;
-        $paymentUrl = config('app.url') . "/pay/" . $invoice->payment_token;
+        $paymentUrl = rtrim(config('app.frontend_url'), '/') . "/pay/" . $invoice->payment_token;
 
         $message = "Hello {$order->customer_name},\n\n"
                  . "Your delivery quotation for Order #{$order->tracking_number} is ready! 📦\n\n"
@@ -102,28 +106,44 @@ class WhatsAppService
         return $this->dispatchMessage($order->customer_phone, $message);
     }
 
+    public function sendPaymentConfirmation(Invoice $invoice): bool
+    {
+        $order = $invoice->order;
+        return $this->dispatchMessage($order->customer_phone, "Payment received for invoice {$invoice->invoice_number}. Your booking {$order->tracking_number} is confirmed.");
+    }
+
+    public function sendAdminInquiryAlert(string $name, string $type): bool
+    {
+        return $this->dispatchMessage($this->adminNumber, "New {$type} submission from {$name}. Please review the InstaDrop admin panel.");
+    }
+
     /**
      * Dispatch WhatsApp Message via API (With Fallback Log Mode when API token is empty)
      */
     protected function dispatchMessage(string $recipientPhone, string $message): bool
     {
-        Log::info("WhatsApp Dispatch to [{$recipientPhone}]: " . $message);
-
-        // If third-party WhatsApp API token is provided, execute HTTP POST
-        if ($this->apiToken) {
-            try {
-                // Generic WhatsApp Gateway HTTP POST call (Twilio / UltraMsg / Meta)
-                Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->apiToken,
-                ])->post('https://api.whatsapp-gateway.com/send', [
-                    'to' => $recipientPhone,
-                    'message' => $message,
-                ]);
-            } catch (\Exception $e) {
-                Log::error("WhatsApp Gateway API Error: " . $e->getMessage());
-            }
+        if (!config('services.whatsapp.enabled') || !$this->apiToken || !$this->phoneNumberId) {
+            Log::warning('WhatsApp message skipped because Meta credentials are incomplete.');
+            return false;
         }
-
-        return true;
+        try {
+            $response = Http::withToken($this->apiToken)->acceptJson()
+                ->post("https://graph.facebook.com/{$this->graphVersion}/{$this->phoneNumberId}/messages", [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type' => 'individual',
+                    'to' => preg_replace('/\D+/', '', $recipientPhone),
+                    'type' => 'text',
+                    'text' => ['preview_url' => false, 'body' => $message],
+                ]);
+            if ($response->failed()) {
+                Log::error('Meta WhatsApp API error', ['status' => $response->status(), 'response' => $response->json()]);
+                return false;
+            }
+            Log::info('WhatsApp message accepted by Meta', ['to' => $recipientPhone, 'message_id' => $response->json('messages.0.id')]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Meta WhatsApp API exception', ['message' => $e->getMessage()]);
+            return false;
+        }
     }
 }

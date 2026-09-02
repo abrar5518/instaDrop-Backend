@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\InquiryController;
+use App\Http\Controllers\Api\PublicSettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,6 +14,8 @@ use App\Http\Controllers\Api\PaymentController;
 */
 
 Route::prefix('v1')->group(function () {
+    Route::get('/settings/public', [PublicSettingsController::class, 'show']);
+    Route::post('/inquiries', [InquiryController::class, 'store']);
     // Public Quote Submission from Next.js Frontend
     Route::post('/quotes', [QuoteController::class, 'store']);
 
@@ -22,5 +26,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/invoices/{token}', [PaymentController::class, 'show']);
 
     // Public Online Payment Processor
-    Route::post('/payments/process', [PaymentController::class, 'process']);
+    Route::post('/payments/paypal/create', [PaymentController::class, 'createPayPalOrder']);
+    Route::post('/payments/paypal/capture', [PaymentController::class, 'capturePayPalOrder']);
 });

@@ -7,6 +7,7 @@ use App\Models\QuoteRequest;
 use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Jobs\SendQuoteNotifications;
 
 class QuoteController extends Controller
 {
@@ -46,6 +47,8 @@ class QuoteController extends Controller
             'additional_info'     => $validated['additional_info'] ?? null,
             'status'              => 'pending',
         ]);
+
+        SendQuoteNotifications::dispatch($quote->id)->afterResponse();
 
         $setting = SystemSetting::first();
         $adminWhatsApp = $setting ? $setting->admin_whatsapp_number : '+448001234455';

@@ -17,6 +17,11 @@
             </div>
 
             <div class="space-y-2">
+                <label class="block font-bold text-slate-700">Public Hotline Number</label>
+                <input type="text" name="public_phone" value="{{ $setting->public_phone }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900">
+            </div>
+
+            <div class="space-y-2">
                 <label class="block font-bold text-slate-700">Admin Business WhatsApp Number</label>
                 <input type="text" name="admin_whatsapp_number" value="{{ $setting->admin_whatsapp_number }}" required class="w-full bg-slate-50 border border-[#0a192f] rounded-xl px-4 py-3 text-[#0a192f] font-bold">
             </div>
@@ -24,6 +29,11 @@
             <div class="space-y-2">
                 <label class="block font-bold text-slate-700">Admin Notification Email</label>
                 <input type="email" name="admin_notification_email" value="{{ $setting->admin_notification_email }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900">
+            </div>
+
+            <div class="space-y-2">
+                <label class="block font-bold text-slate-700">Public Business Address</label>
+                <input type="text" name="business_address" value="{{ $setting->business_address }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900">
             </div>
 
             <div class="space-y-2">

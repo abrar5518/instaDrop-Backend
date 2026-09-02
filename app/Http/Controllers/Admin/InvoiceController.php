@@ -11,6 +11,7 @@ use App\Services\WhatsAppService;
 use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Jobs\SendInvoiceNotifications;
 
 class InvoiceController extends Controller
 {
@@ -48,10 +49,10 @@ class InvoiceController extends Controller
         $order = Order::create([
             'quote_request_id'         => $quote->id,
             'tracking_number'          => $trackingNumber,
-            'customer_name'            => $quote->contact_name,
-            'customer_email'           => $quote->contact_email,
-            'customer_phone'           => $quote->contact_phone,
-            'preferred_contact_method' => $quote->preferred_contact_method,
+            'customer_name'            => $quote->full_name,
+            'customer_email'           => $quote->email,
+            'customer_phone'           => $quote->phone,
+            'preferred_contact_method' => $quote->contact_preference,
             'pickup_address'           => $validated['pickup_address'],
             'delivery_address'          => $validated['delivery_address'],
             'vehicle_type'             => $quote->vehicle_type,
@@ -78,8 +79,7 @@ class InvoiceController extends Controller
         $quote->update(['status' => 'quoted']);
 
         // 3. Automatically Dispatch WhatsApp & Email Payment Link
-        $this->whatsAppService->sendQuotationAndPaymentLink($invoice);
-        $this->emailService->sendInvoicePaymentEmail($invoice);
+        SendInvoiceNotifications::dispatch($invoice->id)->afterResponse();
 
         return redirect()->back()->with('success', "Invoice {$invoiceNumber} created and payment link sent to {$order->customer_name} via {$order->preferred_contact_method}.");
     }

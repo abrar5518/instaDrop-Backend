@@ -81,6 +81,6 @@ class InvoiceController extends Controller
         // 3. Automatically Dispatch WhatsApp & Email Payment Link
         SendInvoiceNotifications::dispatch($invoice->id)->afterResponse();
 
-        return redirect()->back()->with('success', "Invoice {$invoiceNumber} created and payment link sent to {$order->customer_name} via {$order->preferred_contact_method}.");
+        return redirect()->back()->with('success', "Invoice {$invoiceNumber} created. Email and WhatsApp notifications have been queued for delivery.");
     }
 }

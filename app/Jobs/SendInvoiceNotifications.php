@@ -22,7 +22,11 @@ class SendInvoiceNotifications implements ShouldQueue
     {
         $invoice = Invoice::with('order')->find($this->invoiceId);
         if (!$invoice) return;
-        $email->sendInvoicePaymentEmail($invoice);
+
+        if (!$email->sendInvoicePaymentEmail($invoice)) {
+            throw new \RuntimeException("Invoice {$invoice->invoice_number} email could not be sent.");
+        }
+
         $whatsApp->sendQuotationAndPaymentLink($invoice);
     }
 }

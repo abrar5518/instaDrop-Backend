@@ -54,6 +54,15 @@ class EmailNotificationService
 
     private function send(string $to, string $subject, string $body): bool
     {
+        if (config('mail.default') === 'smtp' && blank(config('mail.mailers.smtp.password'))) {
+            Log::error('Email send failed: SMTP password is not configured', [
+                'to' => $to,
+                'subject' => $subject,
+            ]);
+
+            return false;
+        }
+
         try {
             Mail::raw($body, fn ($message) => $message->to($to)->subject($subject));
             Log::info('Email sent', ['to' => $to, 'subject' => $subject]);

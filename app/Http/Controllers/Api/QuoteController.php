@@ -8,6 +8,8 @@ use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Jobs\SendQuoteNotifications;
+use App\Rules\UkPhoneNumber;
+use Illuminate\Validation\Rule;
 
 class QuoteController extends Controller
 {
@@ -20,11 +22,11 @@ class QuoteController extends Controller
             'first_name'          => 'required|string|max:100',
             'last_name'           => 'required|string|max:100',
             'email'               => 'required|email|max:100',
-            'phone'               => 'required|string|max:50',
+            'phone'               => ['required', 'string', 'max:20', new UkPhoneNumber],
             'contact_preference'  => 'required|in:whatsapp,email,phone_call',
             'collection_postcode' => 'required|string|max:20',
             'delivery_postcode'   => 'required|string|max:20',
-            'vehicle_type'        => 'required|string|max:50',
+            'vehicle_type'        => ['required', Rule::in(['courier_car', 'small_van', 'medium_van', 'large_van', 'luton_tail_lift'])],
             'timescale'           => 'required|string|max:50',
             'enquiry_type'        => 'required|in:business,personal',
             'additional_info'     => 'nullable|string',
@@ -37,7 +39,7 @@ class QuoteController extends Controller
             'first_name'          => $validated['first_name'],
             'last_name'           => $validated['last_name'],
             'email'               => $validated['email'],
-            'phone'               => $validated['phone'],
+            'phone'               => UkPhoneNumber::normalize($validated['phone']),
             'contact_preference'  => $validated['contact_preference'],
             'collection_postcode' => strtoupper($validated['collection_postcode']),
             'delivery_postcode'   => strtoupper($validated['delivery_postcode']),

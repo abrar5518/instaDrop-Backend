@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inquiry;
 use Illuminate\Http\Request;
 use App\Jobs\SendInquiryNotifications;
+use App\Rules\UkPhoneNumber;
 
 class InquiryController extends Controller
 {
@@ -15,7 +16,7 @@ class InquiryController extends Controller
             'inquiry_type' => 'required|in:contact,business_account',
             'name' => 'required|string|max:150',
             'email' => 'required|email|max:150',
-            'phone' => 'required|string|max:50',
+            'phone' => ['required', 'string', 'max:20', new UkPhoneNumber],
             'company_name' => 'nullable|required_if:inquiry_type,business_account|string|max:150',
             'company_registration' => 'nullable|required_if:inquiry_type,business_account|string|max:100',
             'monthly_deliveries' => 'nullable|string|max:100',
@@ -23,6 +24,7 @@ class InquiryController extends Controller
             'message' => 'nullable|string|max:5000',
         ]);
 
+        $validated['phone'] = UkPhoneNumber::normalize($validated['phone']);
         $inquiry = Inquiry::create($validated);
         SendInquiryNotifications::dispatch($inquiry->id)->afterResponse();
 

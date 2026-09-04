@@ -9,6 +9,8 @@ use App\Services\EmailNotificationService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class PaymentController extends Controller
 {
@@ -71,8 +73,13 @@ class PaymentController extends Controller
         }
 
         abort_if($invoice->status === 'paid', 409, 'Invoice has already been paid.');
-        $order = $this->payPalService->createOrder($invoice->invoice_number, number_format((float) $invoice->total_amount, 2, '.', ''));
-        return response()->json(['success' => true, 'order_id' => $order['id']]);
+        try {
+            $order = $this->payPalService->createOrder($invoice->invoice_number, number_format((float) $invoice->total_amount, 2, '.', ''));
+            return response()->json(['success' => true, 'order_id' => $order['id']]);
+        } catch (Throwable $e) {
+            Log::error('PayPal order creation failed', ['invoice' => $invoice->invoice_number, 'message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'PayPal checkout is temporarily unavailable. Please contact dispatch.'], 502);
+        }
     }
 
     public function capturePayPalOrder(Request $request, EmailNotificationService $email, WhatsAppService $whatsApp)
@@ -83,11 +90,26 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Invoice has already been paid.', 'invoice_number' => $invoice->invoice_number]);
         }
 
-        $capture = $this->payPalService->captureOrder($validated['paypal_order_id']);
+        try {
+            $capture = $this->payPalService->captureOrder($validated['paypal_order_id']);
+        } catch (Throwable $e) {
+            Log::error('PayPal capture failed', ['invoice' => $invoice->invoice_number, 'message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'PayPal could not confirm this payment. Please try again or contact dispatch.'], 502);
+        }
         $captureData = data_get($capture, 'purchase_units.0.payments.captures.0');
         $amount = data_get($captureData, 'amount.value');
         $currency = data_get($captureData, 'amount.currency_code');
-        abort_unless(($capture['status'] ?? null) === 'COMPLETED' && $currency === 'GBP' && bccomp((string) $amount, (string) $invoice->total_amount, 2) === 0, 422, 'PayPal payment could not be verified.');
+        $reference = data_get($capture, 'purchase_units.0.reference_id');
+        $paypalInvoice = data_get($capture, 'purchase_units.0.invoice_id');
+        abort_unless(
+            ($capture['status'] ?? null) === 'COMPLETED'
+            && $currency === 'GBP'
+            && bccomp((string) $amount, (string) $invoice->total_amount, 2) === 0
+            && $reference === $invoice->invoice_number
+            && $paypalInvoice === $invoice->invoice_number,
+            422,
+            'PayPal payment could not be verified.'
+        );
 
         DB::transaction(function () use ($invoice, $captureData) {
             $invoice->update(['status' => 'paid', 'payment_method' => 'paypal', 'payment_transaction_id' => $captureData['id'], 'paid_at' => now()]);

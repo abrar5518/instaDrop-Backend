@@ -24,5 +24,11 @@ class SendQuoteNotifications implements ShouldQueue
         if (!$quote) return;
         $email->sendQuoteReceiptEmail($quote);
         $whatsApp->sendQuoteAcknowledgment($quote);
+        $adminEmailSent = $email->sendAdminQuoteReceivedEmail($quote);
+        $adminWhatsAppSent = $whatsApp->sendAdminQuoteReceivedAlert($quote);
+
+        if (!$adminEmailSent || !$adminWhatsAppSent) {
+            throw new \RuntimeException("Admin quotation notifications failed for {$quote->quote_number}.");
+        }
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Pod;
 use App\Models\SystemSetting;
+use App\Models\Inquiry;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
@@ -38,19 +39,34 @@ class WhatsAppService
                  . "Our dispatch team is reviewing carrier rates and will contact you shortly via {$quote->contact_preference}.\n\n"
                  . "InstaDrop 24/7 Hotline: {$this->adminNumber}";
 
-        // Send to Customer
-        $this->dispatchMessage($quote->phone, $message);
+        return $this->dispatchMessage($quote->phone, $message);
+    }
 
-        // Also Notify Admin Business WhatsApp
-        $adminMessage = "🔔 NEW QUOTE REQUEST (#{$quote->quote_number})\n"
-                      . "Customer: {$quote->full_name} ({$quote->phone})\n"
-                      . "Route: {$quote->collection_postcode} -> {$quote->delivery_postcode}\n"
-                      . "Vehicle: {$quote->vehicle_type}\n"
-                      . "Preferred Contact: {$quote->contact_preference}";
-        
-        $this->dispatchMessage($this->adminNumber, $adminMessage);
+    public function sendAdminQuoteReceivedAlert(QuoteRequest $quote): bool
+    {
+        $message = "🔔 NEW QUOTATION REQUEST\n\n"
+            . "Quote: {$quote->quote_number}\n"
+            . "Customer: {$quote->full_name}\n"
+            . "Phone: {$quote->phone}\n"
+            . "Email: {$quote->email}\n"
+            . "Route: {$quote->collection_postcode} → {$quote->delivery_postcode}\n"
+            . "Vehicle: {$quote->vehicle_type}\n"
+            . "Timescale: {$quote->timescale}\n"
+            . "Preferred contact: {$quote->contact_preference}";
 
-        return true;
+        $template = config('services.whatsapp.order_template');
+        if ($template && $this->dispatchTemplate($this->adminNumber, $template, [
+            $quote->quote_number,
+            $quote->full_name,
+            "{$quote->collection_postcode} to {$quote->delivery_postcode}",
+            $quote->vehicle_type,
+            $quote->timescale,
+            $quote->contact_preference,
+        ])) {
+            return true;
+        }
+
+        return $this->dispatchMessage($this->adminNumber, $message);
     }
 
     /**
@@ -148,9 +164,32 @@ class WhatsAppService
         return $this->dispatchMessage($this->adminNumber, $message);
     }
 
-    public function sendAdminInquiryAlert(string $name, string $type): bool
+    public function sendAdminInquiryAlert(Inquiry $inquiry): bool
     {
-        return $this->dispatchMessage($this->adminNumber, "New {$type} submission from {$name}. Please review the InstaDrop admin panel.");
+        $type = str_replace('_', ' ', $inquiry->inquiry_type);
+        $reference = 'INQ-' . str_pad((string) $inquiry->id, 6, '0', STR_PAD_LEFT);
+        $context = $inquiry->subject ?: $inquiry->company_name ?: 'General enquiry';
+        $message = "🔔 NEW " . strtoupper($type) . " INQUIRY\n\n"
+            . "Reference: {$reference}\n"
+            . "Name: {$inquiry->name}\n"
+            . "Phone: {$inquiry->phone}\n"
+            . "Email: {$inquiry->email}\n"
+            . "Subject/company: {$context}\n"
+            . "Please review the full details in the InstaDrop admin panel.";
+
+        $template = config('services.whatsapp.inquiry_template');
+        if ($template && $this->dispatchTemplate($this->adminNumber, $template, [
+            $reference,
+            $type,
+            $inquiry->name,
+            $inquiry->phone,
+            $inquiry->email,
+            $context,
+        ])) {
+            return true;
+        }
+
+        return $this->dispatchMessage($this->adminNumber, $message);
     }
 
     /**

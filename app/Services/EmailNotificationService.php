@@ -6,6 +6,7 @@ use App\Models\QuoteRequest;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Pod;
+use App\Models\Inquiry;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -17,6 +18,30 @@ class EmailNotificationService
     public function sendQuoteReceiptEmail(QuoteRequest $quote): bool
     {
         return $this->send($quote->email, 'We received your InstaDrop quote request', "Hello {$quote->full_name},\n\nWe received quote request {$quote->quote_number}. Our dispatch team will contact you shortly.");
+    }
+
+    public function sendAdminQuoteReceivedEmail(QuoteRequest $quote): bool
+    {
+        $admin = \App\Models\SystemSetting::first()?->admin_notification_email;
+        if (!$admin) {
+            Log::warning('Admin quote email skipped because admin email is missing.', ['quote' => $quote->quote_number]);
+            return false;
+        }
+
+        $body = "NEW QUOTATION REQUEST\n\n"
+            . "Quote reference: {$quote->quote_number}\n"
+            . "Customer: {$quote->full_name}\n"
+            . "Email: {$quote->email}\n"
+            . "Phone: {$quote->phone}\n"
+            . "Preferred contact: {$quote->contact_preference}\n"
+            . "Route: {$quote->collection_postcode} to {$quote->delivery_postcode}\n"
+            . "Vehicle: {$quote->vehicle_type}\n"
+            . "Timescale: {$quote->timescale}\n"
+            . "Enquiry type: {$quote->enquiry_type}\n"
+            . "Additional information: " . ($quote->additional_info ?: 'None') . "\n\n"
+            . "Review quotation: " . rtrim(config('app.url'), '/') . "/admin/quotes/{$quote->id}";
+
+        return $this->send($admin, "New quotation {$quote->quote_number} - {$quote->full_name}", $body);
     }
 
     /**
@@ -63,7 +88,7 @@ class EmailNotificationService
             . "PayPal transaction: {$invoice->payment_transaction_id}\n"
             . "Paid at: {$invoice->paid_at}\n"
             . "Route: {$order->pickup_address} to {$order->delivery_address}\n\n"
-            . "Review the booking: " . rtrim(config('app.url'), '/') . "/admin/orders/{$order->id}";
+            . "Review the booking: " . rtrim(config('app.url'), '/') . "/admin/orders";
 
         return $this->send($admin, "Payment received: {$invoice->invoice_number} - {$order->customer_name}", $body);
     }
@@ -76,10 +101,29 @@ class EmailNotificationService
         return $this->send($order->customer_email, "Proof of delivery - {$order->tracking_number}", "Your delivery was received by {$pod->recipient_name} at {$pod->delivered_at}.");
     }
 
-    public function sendAdminInquiryEmail(string $name, string $email, string $type): bool
+    public function sendAdminInquiryEmail(Inquiry $inquiry): bool
     {
         $admin = \App\Models\SystemSetting::first()?->admin_notification_email;
-        return $admin ? $this->send($admin, "New InstaDrop {$type} submission", "New {$type} submission from {$name} ({$email}). Review it in the admin panel.") : false;
+        if (!$admin) {
+            Log::warning('Admin inquiry email skipped because admin email is missing.', ['inquiry' => $inquiry->id]);
+            return false;
+        }
+
+        $type = str_replace('_', ' ', $inquiry->inquiry_type);
+        $reference = 'INQ-' . str_pad((string) $inquiry->id, 6, '0', STR_PAD_LEFT);
+        $body = "NEW " . strtoupper($type) . " INQUIRY\n\n"
+            . "Reference: {$reference}\n"
+            . "Name: {$inquiry->name}\n"
+            . "Email: {$inquiry->email}\n"
+            . "Phone: {$inquiry->phone}\n"
+            . "Company: " . ($inquiry->company_name ?: 'N/A') . "\n"
+            . "Company registration: " . ($inquiry->company_registration ?: 'N/A') . "\n"
+            . "Monthly deliveries: " . ($inquiry->monthly_deliveries ?: 'N/A') . "\n"
+            . "Subject: " . ($inquiry->subject ?: 'N/A') . "\n"
+            . "Message: " . ($inquiry->message ?: 'N/A') . "\n\n"
+            . "Review inquiry: " . rtrim(config('app.url'), '/') . "/admin/inquiries";
+
+        return $this->send($admin, "New InstaDrop {$type}: {$reference} - {$inquiry->name}", $body);
     }
 
     private function send(string $to, string $subject, string $body): bool

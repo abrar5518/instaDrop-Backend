@@ -22,8 +22,11 @@ class SendInquiryNotifications implements ShouldQueue
     {
         $inquiry = Inquiry::find($this->inquiryId);
         if (!$inquiry) return;
-        $type = str_replace('_', ' ', $inquiry->inquiry_type);
-        $email->sendAdminInquiryEmail($inquiry->name, $inquiry->email, $type);
-        $whatsApp->sendAdminInquiryAlert($inquiry->name, $type);
+        $emailSent = $email->sendAdminInquiryEmail($inquiry);
+        $whatsAppSent = $whatsApp->sendAdminInquiryAlert($inquiry);
+
+        if (!$emailSent || !$whatsAppSent) {
+            throw new \RuntimeException("Admin inquiry notifications failed for inquiry {$inquiry->id}.");
+        }
     }
 }

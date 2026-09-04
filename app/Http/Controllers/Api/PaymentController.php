@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Services\PayPalService;
-use App\Services\EmailNotificationService;
-use App\Services\WhatsAppService;
+use App\Jobs\SendPaymentNotifications;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -82,7 +81,7 @@ class PaymentController extends Controller
         }
     }
 
-    public function capturePayPalOrder(Request $request, EmailNotificationService $email, WhatsAppService $whatsApp)
+    public function capturePayPalOrder(Request $request)
     {
         $validated = $request->validate(['payment_token' => 'required|string', 'paypal_order_id' => 'required|string|max:100']);
         $invoice = Invoice::with('order')->where('payment_token', $validated['payment_token'])->firstOrFail();
@@ -115,8 +114,7 @@ class PaymentController extends Controller
             $invoice->update(['status' => 'paid', 'payment_method' => 'paypal', 'payment_transaction_id' => $captureData['id'], 'paid_at' => now()]);
             $invoice->order?->update(['status' => 'paid']);
         });
-        $email->sendPaymentConfirmationEmail($invoice->fresh('order'));
-        $whatsApp->sendPaymentConfirmation($invoice->fresh('order'));
+        SendPaymentNotifications::dispatch($invoice->id)->afterResponse();
 
         return response()->json(['success' => true, 'message' => 'Payment completed successfully.', 'invoice_number' => $invoice->invoice_number]);
     }

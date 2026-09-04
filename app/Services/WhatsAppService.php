@@ -112,6 +112,42 @@ class WhatsAppService
         return $this->dispatchMessage($order->customer_phone, "Payment received for invoice {$invoice->invoice_number}. Your booking {$order->tracking_number} is confirmed.");
     }
 
+    public function sendAdminPaymentReceivedAlert(Invoice $invoice): bool
+    {
+        $invoice->loadMissing('order.quoteRequest');
+        $order = $invoice->order;
+        if (!$order) {
+            Log::warning('Admin payment WhatsApp skipped because the order is missing.', ['invoice' => $invoice->invoice_number]);
+            return false;
+        }
+
+        $quoteNumber = $order->quoteRequest?->quote_number ?? 'N/A';
+        $message = "✅ PAYMENT RECEIVED\n\n"
+            . "Customer: {$order->customer_name}\n"
+            . "Quote: {$quoteNumber}\n"
+            . "Order: {$order->tracking_number}\n"
+            . "Invoice: {$invoice->invoice_number}\n"
+            . "Amount: £" . number_format((float) $invoice->total_amount, 2) . " GBP\n"
+            . "PayPal transaction: {$invoice->payment_transaction_id}\n"
+            . "Route: {$order->pickup_address} → {$order->delivery_address}\n\n"
+            . "The verified payment is recorded in the InstaDrop admin panel.";
+
+        $template = config('services.whatsapp.payment_template');
+        if ($template && $this->dispatchTemplate($this->adminNumber, $template, [
+            $invoice->invoice_number,
+            $order->customer_name,
+            $quoteNumber,
+            $order->tracking_number,
+            number_format((float) $invoice->total_amount, 2, '.', ''),
+            (string) $invoice->payment_transaction_id,
+        ])) {
+            return true;
+        }
+
+        // Keep the in-session fallback while a newly submitted Meta template is pending approval.
+        return $this->dispatchMessage($this->adminNumber, $message);
+    }
+
     public function sendAdminInquiryAlert(string $name, string $type): bool
     {
         return $this->dispatchMessage($this->adminNumber, "New {$type} submission from {$name}. Please review the InstaDrop admin panel.");
@@ -143,6 +179,55 @@ class WhatsAppService
             return true;
         } catch (\Throwable $e) {
             Log::error('Meta WhatsApp API exception', ['message' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    protected function dispatchTemplate(string $recipientPhone, string $template, array $parameters): bool
+    {
+        if (!config('services.whatsapp.enabled') || !$this->apiToken || !$this->phoneNumberId) {
+            return false;
+        }
+
+        try {
+            $response = Http::withToken($this->apiToken)->acceptJson()
+                ->post("https://graph.facebook.com/{$this->graphVersion}/{$this->phoneNumberId}/messages", [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type' => 'individual',
+                    'to' => preg_replace('/\D+/', '', $recipientPhone),
+                    'type' => 'template',
+                    'template' => [
+                        'name' => $template,
+                        'language' => ['code' => config('services.whatsapp.template_language', 'en')],
+                        'components' => [[
+                            'type' => 'body',
+                            'parameters' => array_map(
+                                fn ($value) => ['type' => 'text', 'text' => (string) $value],
+                                $parameters
+                            ),
+                        ]],
+                    ],
+                ]);
+
+            if ($response->failed()) {
+                Log::warning('Meta WhatsApp template unavailable; using text fallback.', [
+                    'template' => $template,
+                    'status' => $response->status(),
+                ]);
+                return false;
+            }
+
+            Log::info('WhatsApp template accepted by Meta', [
+                'to' => $recipientPhone,
+                'template' => $template,
+                'message_id' => $response->json('messages.0.id'),
+            ]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('Meta WhatsApp template exception; using text fallback.', [
+                'template' => $template,
+                'message' => $e->getMessage(),
+            ]);
             return false;
         }
     }

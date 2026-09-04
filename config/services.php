@@ -46,7 +46,11 @@ return [
         'graph_version' => env('WHATSAPP_GRAPH_VERSION', 'v25.0'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
         'admin_number' => env('WHATSAPP_ADMIN_NUMBER'),
+        'order_template' => env('WHATSAPP_ORDER_TEMPLATE'),
+        'inquiry_template' => env('WHATSAPP_INQUIRY_TEMPLATE'),
+        'payment_template' => env('WHATSAPP_PAYMENT_TEMPLATE'),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
     ],
 

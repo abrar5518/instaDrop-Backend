@@ -14,7 +14,7 @@ class SettingsController extends Controller
             'business_name' => 'InstaDrop Courier Services Ltd',
             'public_phone' => '0800 123 4455',
             'admin_whatsapp_number' => '+448001234455',
-            'admin_notification_email' => 'dispatch@instadrop.co.uk',
+            'admin_notification_email' => 'dispatch@instadrop.uk',
             'business_address' => 'Central Logistics Park, M25 Hub Highway, London UK',
             'currency_code' => 'GBP',
             'vat_rate' => 20.00,

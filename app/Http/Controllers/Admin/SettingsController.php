@@ -42,7 +42,14 @@ class SettingsController extends Controller
             'tiktok_url'               => 'nullable|url|max:255',
             'youtube_url'              => 'nullable|url|max:255',
             'linkedin_url'             => 'nullable|url|max:255',
+            'google_tag_manager_id'    => ['nullable','regex:/^GTM-[A-Z0-9]+$/'],
+            'google_analytics_id'      => ['nullable','regex:/^G-[A-Z0-9]+$/'],
+            'meta_pixel_id'            => ['nullable','regex:/^[0-9]+$/'],
         ]);
+
+        foreach (['facebook','x','instagram','tiktok','youtube','linkedin','google_tag_manager','google_analytics','meta_pixel'] as $name) {
+            $validated[$name.'_enabled'] = $request->boolean($name.'_enabled');
+        }
 
         $setting = SystemSetting::first();
         if ($setting) {

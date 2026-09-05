@@ -18,12 +18,17 @@ class PublicSettingsController extends Controller
             'email' => $setting?->admin_notification_email ?? 'dispatch@instadrop.uk',
             'address' => $setting?->business_address ?? 'Central Logistics Park, M25 Hub Highway, London UK',
             'social_links' => [
-                'facebook' => $setting?->facebook_url,
-                'x' => $setting?->x_url,
-                'instagram' => $setting?->instagram_url,
-                'tiktok' => $setting?->tiktok_url,
-                'youtube' => $setting?->youtube_url,
-                'linkedin' => $setting?->linkedin_url,
+                'facebook' => $setting?->facebook_enabled ? $setting->facebook_url : null,
+                'x' => $setting?->x_enabled ? $setting->x_url : null,
+                'instagram' => $setting?->instagram_enabled ? $setting->instagram_url : null,
+                'tiktok' => $setting?->tiktok_enabled ? $setting->tiktok_url : null,
+                'youtube' => $setting?->youtube_enabled ? $setting->youtube_url : null,
+                'linkedin' => $setting?->linkedin_enabled ? $setting->linkedin_url : null,
+            ],
+            'tracking' => [
+                'gtm_id' => $setting?->google_tag_manager_enabled ? $setting->google_tag_manager_id : null,
+                'ga_id' => $setting?->google_analytics_enabled ? $setting->google_analytics_id : null,
+                'meta_pixel_id' => $setting?->meta_pixel_enabled ? $setting->meta_pixel_id : null,
             ],
         ]);
     }

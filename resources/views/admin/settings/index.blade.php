@@ -51,10 +51,18 @@
             <h3 class="text-sm font-extrabold text-slate-900 font-display">Published Social Profiles</h3>
             <p class="text-slate-500">Only completed profile URLs are shown in the website footer.</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                @foreach(['facebook_url'=>'Facebook','x_url'=>'X / Twitter','instagram_url'=>'Instagram','tiktok_url'=>'TikTok','youtube_url'=>'YouTube','linkedin_url'=>'LinkedIn'] as $field => $label)
-                    <div class="space-y-2"><label class="block font-bold text-slate-600">{{ $label }}</label><input type="url" name="{{ $field }}" value="{{ old($field, $setting->$field) }}" placeholder="https://" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900"></div>
+                @foreach(['facebook'=>'Facebook','x'=>'X / Twitter','instagram'=>'Instagram','tiktok'=>'TikTok','youtube'=>'YouTube','linkedin'=>'LinkedIn'] as $name => $label)
+                    <div class="space-y-2"><div class="flex items-center justify-between"><label class="font-bold text-slate-600">{{ $label }}</label><label class="flex items-center gap-2 font-bold"><input type="checkbox" name="{{ $name }}_enabled" value="1" @checked(old($name.'_enabled', $setting->{$name.'_enabled'}))> Show</label></div><input type="url" name="{{ $name }}_url" value="{{ old($name.'_url', $setting->{$name.'_url'}) }}" placeholder="https://" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900"></div>
                 @endforeach
             </div>
+        </div>
+
+        <div class="border-t border-slate-100 pt-6 space-y-4">
+            <h3 class="text-sm font-extrabold text-slate-900 font-display">Analytics & Advertising</h3>
+            <p class="text-slate-500">Enable an integration only after entering its valid ID. Changes are published to the website automatically.</p>
+            @foreach(['google_tag_manager'=>['Google Tag Manager','GTM-XXXXXXX'],'google_analytics'=>['Google Analytics 4','G-XXXXXXXXXX'],'meta_pixel'=>['Meta Pixel','Numeric Pixel ID']] as $name => [$label,$placeholder])
+                <div class="rounded-2xl border border-slate-200 p-4"><div class="mb-2 flex items-center justify-between"><label class="font-extrabold text-slate-700">{{ $label }}</label><label class="flex items-center gap-2 font-bold"><input type="checkbox" name="{{ $name }}_enabled" value="1" @checked(old($name.'_enabled', $setting->{$name.'_enabled'}))> Enabled</label></div><input type="text" name="{{ $name }}_id" value="{{ old($name.'_id', $setting->{$name.'_id'}) }}" placeholder="{{ $placeholder }}" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3"></div>
+            @endforeach
         </div>
 
         <div class="border-t border-slate-100 pt-6 space-y-4">

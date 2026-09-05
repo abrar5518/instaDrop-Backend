@@ -36,6 +36,12 @@ class SettingsController extends Controller
             'whatsapp_api_token'       => 'nullable|string',
             'stripe_public_key'        => 'nullable|string',
             'stripe_secret_key'        => 'nullable|string',
+            'facebook_url'             => 'nullable|url|max:255',
+            'x_url'                    => 'nullable|url|max:255',
+            'instagram_url'            => 'nullable|url|max:255',
+            'tiktok_url'               => 'nullable|url|max:255',
+            'youtube_url'              => 'nullable|url|max:255',
+            'linkedin_url'             => 'nullable|url|max:255',
         ]);
 
         $setting = SystemSetting::first();

@@ -48,6 +48,16 @@
         </div>
 
         <div class="border-t border-slate-100 pt-6 space-y-4">
+            <h3 class="text-sm font-extrabold text-slate-900 font-display">Published Social Profiles</h3>
+            <p class="text-slate-500">Only completed profile URLs are shown in the website footer.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                @foreach(['facebook_url'=>'Facebook','x_url'=>'X / Twitter','instagram_url'=>'Instagram','tiktok_url'=>'TikTok','youtube_url'=>'YouTube','linkedin_url'=>'LinkedIn'] as $field => $label)
+                    <div class="space-y-2"><label class="block font-bold text-slate-600">{{ $label }}</label><input type="url" name="{{ $field }}" value="{{ old($field, $setting->$field) }}" placeholder="https://" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900"></div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="border-t border-slate-100 pt-6 space-y-4">
             <h3 class="text-sm font-extrabold text-slate-900 font-display">3rd-Party API Tokens (Optional)</h3>
 
             <div class="space-y-2">

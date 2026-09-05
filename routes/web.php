@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PodController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Admin\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +24,12 @@ Route::get('/pay/{token}', function ($token) {
 })->name('payment.checkout');
 
 // Admin Panel Routes
-Route::prefix('admin')->as('admin.')->group(function () {
+Route::middleware('guest')->prefix('admin')->as('admin.')->group(function () {
+    Route::get('/login', [AuthController::class, 'create'])->name('login');
+    Route::post('/login', [AuthController::class, 'store'])->middleware('throttle:5,1')->name('login.store');
+});
+Route::middleware('auth')->prefix('admin')->as('admin.')->group(function () {
+    Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     // Dashboard Home
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 

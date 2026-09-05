@@ -55,8 +55,9 @@
             </nav>
         </div>
 
-        <div class="text-[10px] text-slate-400 border-t border-slate-800 pt-4">
-          InstaDrop Admin v1.0 • Running Live
+        <div class="text-[10px] text-slate-400 border-t border-slate-800 pt-4 space-y-3">
+          <p>Signed in as {{ auth()->user()->email }}</p>
+          <form action="{{ route('admin.logout') }}" method="POST">@csrf<button class="w-full rounded-lg border border-slate-700 px-3 py-2 text-left font-bold text-white hover:border-[#c6ff00]">Sign out</button></form>
         </div>
     </aside>
 

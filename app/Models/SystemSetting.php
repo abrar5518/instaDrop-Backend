@@ -17,6 +17,7 @@ class SystemSetting extends Model
         'admin_whatsapp_number',
         'admin_notification_email',
         'business_address',
+        'facebook_url', 'x_url', 'instagram_url', 'tiktok_url', 'youtube_url', 'linkedin_url',
         'currency_code',
         'vat_rate',
         'whatsapp_api_token',

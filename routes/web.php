@@ -30,6 +30,8 @@ Route::middleware('guest')->prefix('admin')->as('admin.')->group(function () {
 });
 Route::middleware('auth')->prefix('admin')->as('admin.')->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
+    Route::get('/security', [AuthController::class, 'edit'])->name('security.edit');
+    Route::put('/security', [AuthController::class, 'update'])->middleware('throttle:5,1')->name('security.update');
     // Dashboard Home
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 

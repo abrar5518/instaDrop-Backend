@@ -17,6 +17,7 @@ class SystemSetting extends Model
         'admin_whatsapp_number',
         'admin_notification_email',
         'business_address',
+        'header_logo_path', 'footer_logo_path', 'favicon_path',
         'facebook_url', 'x_url', 'instagram_url', 'tiktok_url', 'youtube_url', 'linkedin_url',
         'facebook_enabled', 'x_enabled', 'instagram_enabled', 'tiktok_enabled', 'youtube_enabled', 'linkedin_enabled',
         'google_tag_manager_id', 'google_tag_manager_enabled', 'google_analytics_id', 'google_analytics_enabled', 'meta_pixel_id', 'meta_pixel_enabled',

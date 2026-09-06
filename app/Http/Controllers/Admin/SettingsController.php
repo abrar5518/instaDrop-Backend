@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -45,18 +46,26 @@ class SettingsController extends Controller
             'google_tag_manager_id'    => ['nullable','regex:/^GTM-[A-Z0-9]+$/'],
             'google_analytics_id'      => ['nullable','regex:/^G-[A-Z0-9]+$/'],
             'meta_pixel_id'            => ['nullable','regex:/^[0-9]+$/'],
+            'header_logo'              => ['nullable','file','mimes:png,jpg,jpeg,webp','max:2048'],
+            'footer_logo'              => ['nullable','file','mimes:png,jpg,jpeg,webp','max:2048'],
+            'favicon'                  => ['nullable','file','mimes:png,jpg,jpeg,webp,ico','max:1024'],
         ]);
 
         foreach (['facebook','x','instagram','tiktok','youtube','linkedin','google_tag_manager','google_analytics','meta_pixel'] as $name) {
             $validated[$name.'_enabled'] = $request->boolean($name.'_enabled');
         }
 
-        $setting = SystemSetting::first();
-        if ($setting) {
-            $setting->update($validated);
-        } else {
-            SystemSetting::create($validated);
+        $setting = SystemSetting::firstOrNew();
+        foreach (['header_logo' => 'header_logo_path', 'footer_logo' => 'footer_logo_path', 'favicon' => 'favicon_path'] as $input => $column) {
+            unset($validated[$input]);
+            if ($request->hasFile($input)) {
+                if ($setting->{$column} && str_starts_with($setting->{$column}, 'branding/')) {
+                    Storage::disk('public')->delete($setting->{$column});
+                }
+                $validated[$column] = $request->file($input)->store('branding', 'public');
+            }
         }
+        $setting->fill($validated)->save();
 
         return redirect()->back()->with('success', 'System settings updated successfully.');
     }

@@ -7,7 +7,7 @@
         <p class="text-xs text-slate-500">Configure Business WhatsApp Number, Email Notifications, and API Keys</p>
     </div>
 
-    <form action="{{ route('admin.settings.update') }}" method="POST" class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 text-xs shadow-xs">
+    <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 text-xs shadow-xs">
         @csrf
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -44,6 +44,16 @@
             <div class="col-span-2 space-y-2">
                 <label class="block font-bold text-slate-700">Currency Code</label>
                 <input type="text" name="currency_code" value="{{ $setting->currency_code }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900">
+            </div>
+        </div>
+
+        <div class="border-t border-slate-100 pt-6 space-y-4">
+            <h3 class="text-sm font-extrabold text-slate-900 font-display">Website Branding</h3>
+            <p class="text-slate-500">Upload PNG, JPG or WebP images. Header and footer logos can be different. Maximum logo size 2 MB; favicon 1 MB.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                @foreach(['header_logo'=>['Header Logo','header_logo_path'],'footer_logo'=>['Footer Logo','footer_logo_path'],'favicon'=>['Browser Favicon','favicon_path']] as $input => [$label,$column])
+                    <div class="rounded-2xl border border-slate-200 p-4 space-y-3"><label class="font-bold text-slate-700">{{ $label }}</label>@if($setting->$column)<div class="h-20 rounded-xl bg-slate-100 p-3 flex items-center justify-center"><img src="{{ Storage::url($setting->$column) }}" alt="Current {{ strtolower($label) }}" class="max-h-full max-w-full object-contain"></div>@else<div class="h-20 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">Default branding active</div>@endif<input type="file" name="{{ $input }}" accept="image/png,image/jpeg,image/webp,image/x-icon" class="block w-full text-[11px] file:mr-2 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-white"></div>
+                @endforeach
             </div>
         </div>
 

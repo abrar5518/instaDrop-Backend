@@ -17,7 +17,7 @@ class PdfInvoiceService
         $setting = SystemSetting::first();
 
         $businessName = $setting ? $setting->business_name : 'InstaDrop Courier Services Ltd';
-        $adminEmail = $setting ? $setting->admin_notification_email : 'dispatch@instadrop.co.uk';
+        $adminEmail = $setting ? $setting->admin_notification_email : 'dispatch@instadrop.uk';
         $vatRate = $setting ? $setting->vat_rate : 20.00;
 
         return [

@@ -63,7 +63,7 @@
             <!-- ALL 11 FORM FIELDS DETAILED BREAKDOWN -->
             <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-4 shadow-sm">
                 <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-3">
-                    Frontend Submission Details (11 Form Fields)
+                    Delivery request details
                 </h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -107,8 +107,8 @@
                     </div>
 
                     <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 md:col-span-3">
-                        <span class="text-slate-400 block font-semibold">10. Type of Enquiry:</span>
-                        <strong class="text-blue-700 font-bold capitalize">{{ $quote->enquiry_type }}</strong>
+                        <span class="text-slate-400 block font-semibold">Requested collection date & time:</span>
+                        <strong class="text-blue-700 font-bold">{{ $quote->collection_schedule }}</strong>
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 md:col-span-3 space-y-1">

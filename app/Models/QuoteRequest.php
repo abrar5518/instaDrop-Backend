@@ -22,11 +22,18 @@ class QuoteRequest extends Model
         'delivery_postcode',
         'vehicle_type',
         'timescale',
-        'enquiry_type',
+        'collection_date',
+        'collection_time',
         'additional_info',
         'status',
         'admin_notes',
     ];
+
+    public function getCollectionScheduleAttribute(): string
+    {
+        if (!$this->collection_date || !$this->collection_time) return 'Not specified';
+        return \Carbon\CarbonImmutable::parse($this->collection_date)->format('d M Y').' at '.substr($this->collection_time, 0, 5).' (UK time)';
+    }
 
     public function getFullNameAttribute()
     {

@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\PublicSettingsController;
 */
 
 Route::prefix('v1')->group(function () {
+    Route::get('/blogs', [\App\Http\Controllers\Api\BlogController::class, 'index']);
+    Route::get('/blogs/{slug}', [\App\Http\Controllers\Api\BlogController::class, 'show']);
     Route::get('/settings/public', [PublicSettingsController::class, 'show']);
     Route::post('/inquiries', [InquiryController::class, 'store']);
     // Public Quote Submission from Next.js Frontend

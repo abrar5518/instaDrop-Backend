@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 class QuoteController extends Controller
 {
     /**
-     * Handle incoming quote request with all 11 form fields from Next.js frontend.
+     * Handle a quote request with the requested collection schedule in UK local time.
      */
     public function store(Request $request)
     {
@@ -28,9 +28,19 @@ class QuoteController extends Controller
             'delivery_postcode'   => 'required|string|max:20',
             'vehicle_type'        => ['required', Rule::in(['courier_car', 'small_van', 'medium_van', 'large_van', 'luton_tail_lift'])],
             'timescale'           => 'required|string|max:50',
-            'enquiry_type'        => 'required|in:business,personal',
+            'collection_date'    => 'required|date_format:Y-m-d',
+            'collection_time'    => 'required|date_format:H:i',
             'additional_info'     => 'nullable|string',
         ]);
+
+        $requested = $validated['collection_date'].' '.$validated['collection_time'];
+        $collectionAt = \Carbon\CarbonImmutable::createFromFormat('!Y-m-d H:i', $requested, 'Europe/London');
+        if ($collectionAt->format('Y-m-d H:i') !== $requested) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['collection_time' => 'Please choose a valid UK local time. This time is affected by the clock change.']);
+        }
+        if ($collectionAt->isPast()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['collection_date' => 'Please choose a collection date and time in the future (UK time).']);
+        }
 
         $quoteNumber = 'Q-' . strtoupper(Str::random(6));
 
@@ -45,7 +55,8 @@ class QuoteController extends Controller
             'delivery_postcode'   => strtoupper($validated['delivery_postcode']),
             'vehicle_type'        => $validated['vehicle_type'],
             'timescale'           => $validated['timescale'],
-            'enquiry_type'        => $validated['enquiry_type'],
+            'collection_date'    => $validated['collection_date'],
+            'collection_time'    => $validated['collection_time'],
             'additional_info'     => $validated['additional_info'] ?? null,
             'status'              => 'pending',
         ]);

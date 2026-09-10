@@ -2,10 +2,17 @@
     "name": "instadrop/courier-backend",
     "type": "project",
     "description": "InstaDrop Same-Day Courier Services - Laravel Backend & Admin Panel",
-    "keywords": ["laravel", "courier", "admin-panel", "api", "instadrop"],
+    "keywords": [
+        "laravel",
+        "courier",
+        "admin-panel",
+        "api",
+        "instadrop"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ezyang/htmlpurifier": "^4.18",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9"
@@ -31,5 +38,10 @@
         "sort-packages": true
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    }
 }

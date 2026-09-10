@@ -52,6 +52,7 @@ class WhatsAppService
             . "Route: {$quote->collection_postcode} → {$quote->delivery_postcode}\n"
             . "Vehicle: {$quote->vehicle_type}\n"
             . "Timescale: {$quote->timescale}\n"
+            . "Requested collection: {$quote->collection_schedule}\n"
             . "Preferred contact: {$quote->contact_preference}";
 
         $template = config('services.whatsapp.order_template');
@@ -60,7 +61,7 @@ class WhatsAppService
             $quote->full_name,
             "{$quote->collection_postcode} to {$quote->delivery_postcode}",
             $quote->vehicle_type,
-            $quote->timescale,
+            $quote->timescale . " / " . $quote->collection_schedule,
             $quote->contact_preference,
         ])) {
             return true;

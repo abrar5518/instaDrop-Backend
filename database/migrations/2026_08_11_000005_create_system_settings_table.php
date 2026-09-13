@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('system_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('business_name', 100)->default('InstaDrop Courier Services Ltd');
+            $table->string('business_name', 100)->default('InstaDrop Courier Services');
             $table->string('hotline_phone', 50)->default('0800 123 4455');
             $table->string('support_email', 100)->default('dispatch@instadrop.co.uk');
-            $table->string('office_address', 255)->default('100 Pall Mall, St. James\'s, London, SW1Y 5NQ');
+            $table->string('office_address', 255)->default('100 Pall Mall, St. James, London, SW1Y 5NQ');
             $table->string('admin_whatsapp_number', 50)->default('+448001234455');
             $table->string('opening_hours', 100)->default('24/7 Dispatch Desk • 365 Days a Year');
             $table->string('currency_code', 10)->default('GBP');

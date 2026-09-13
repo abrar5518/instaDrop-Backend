@@ -20,43 +20,45 @@ class PodController extends Controller
         $this->emailService = $emailService;
     }
 
-    /**
-     * Step 17 & 18: Upload Proof of Delivery (POD) & Auto-Dispatch Certificate to Customer
-     */
-    public function store(Request $request, $orderId)
+    public function create(Order $order)
     {
-        $request->validate([
+        return view('admin.pods.create', compact('order'));
+    }
+
+    public function store(Request $request, Order $order)
+    {
+        $validated = $request->validate([
             'recipient_name' => 'required|string|max:100',
-            'pod_photo'      => 'nullable|image|max:5048',
-            'notes'          => 'nullable|string',
+            'signature_file' => 'nullable|file|mimes:png,jpg,jpeg,pdf|max:5120',
+            'photo_file'     => 'nullable|file|mimes:png,jpg,jpeg,pdf|max:5120',
+            'delivered_at'   => 'required|date',
         ]);
 
-        $order = Order::findOrFail($orderId);
-
-        $photoPath = null;
-        if ($request->hasFile('pod_photo')) {
-            $photoPath = $request->file('pod_photo')->store('pods', 'public');
+        $signaturePath = null;
+        if ($request->hasFile('signature_file')) {
+            $signaturePath = $request->file('signature_file')->store('pods', 'public');
         }
 
-        $pod = Pod::updateOrCreate(
-            ['order_id' => $order->id],
-            [
-                'recipient_name' => $request->recipient_name,
-                'signature_url'  => $photoPath ? asset('storage/' . $photoPath) : null,
-                'photo_url'      => $photoPath ? asset('storage/' . $photoPath) : null,
-                'delivered_at'   => now(),
-                'notes'          => $request->notes,
-            ]
-        );
+        $photoPath = null;
+        if ($request->hasFile('photo_file')) {
+            $photoPath = $request->file('photo_file')->store('pods', 'public');
+        }
 
-        // Update order status to delivered
-        $order->status = 'delivered';
-        $order->save();
+        $pod = Pod::create([
+            'order_id'       => $order->id,
+            'recipient_name' => $validated['recipient_name'],
+            'signature_path' => $signaturePath,
+            'photo_path'     => $photoPath,
+            'delivered_at'   => $validated['delivered_at'],
+        ]);
 
-        // Step 18: Auto send digital POD certificate to customer via WhatsApp & Email
-        $this->whatsAppService->sendPodCertificate($order, $pod);
-        $this->emailService->sendPodCertificate($order, $pod);
+        // Update Order status to Delivered
+        $order->update(['status' => 'delivered']);
 
-        return redirect()->back()->with('success', "Proof of Delivery (POD) uploaded successfully and digital certificate dispatched to customer!");
+        // Automatically dispatch POD notifications via WhatsApp & Email
+        $this->whatsAppService->sendPodNotification($order, $pod);
+        $this->emailService->sendPodEmail($order, $pod);
+
+        return redirect()->route('admin.orders.index')->with('success', "POD uploaded for Order #{$order->tracking_number}. Notification automatically sent to customer!");
     }
 }

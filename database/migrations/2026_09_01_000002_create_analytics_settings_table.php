@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('site_name')->default('InstaDrop Courier Services');
             $table->string('contact_email')->default('dispatch@instadrop.co.uk');
             $table->string('contact_phone')->default('+44 7852 502775');
-            $table->text('contact_address')->default('100 Pall Mall, St. James\'s, London, SW1Y 5NQ');
+            $table->string('contact_address', 500)->default('100 Pall Mall, St. James, London, SW1Y 5NQ');
             $table->string('facebook_url')->nullable();
             $table->string('instagram_url')->nullable();
 

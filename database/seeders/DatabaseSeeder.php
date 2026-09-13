@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Initial System Settings
         SystemSetting::firstOrCreate([], [
-            'business_name' => 'InstaDrop Courier Services Ltd',
+            'business_name' => 'InstaDrop Courier Services',
             'admin_whatsapp_number' => '+448001234455',
             'admin_notification_email' => 'dispatch@instadrop.co.uk',
             'currency_code' => 'GBP',

@@ -6,17 +6,19 @@ use App\Jobs\SendQuoteNotifications;
 use App\Models\QuoteRequest;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class QuoteCollectionScheduleTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutMiddleware(ThrottleRequests::class);
         Bus::fake(); // Never send real emails or WhatsApp messages from tests.
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2030-03-30 12:00', 'Europe/London'));
     }
@@ -42,10 +44,10 @@ class QuoteCollectionScheduleTest extends TestCase
         $response = $this->postJson('/api/v1/quotes', $this->payload())->assertCreated();
         $quote = QuoteRequest::where('quote_number', $response->json('quote_number'))->firstOrFail();
         $this->assertSame('2030-03-31', $quote->collection_date);
-        $this->assertSame('14:30:00', $quote->collection_time);
+        $this->assertSame('14:30', substr($quote->collection_time, 0, 5));
         $this->assertNull($quote->enquiry_type);
         $this->assertSame('31 Mar 2030 at 14:30 (UK time)', $quote->collection_schedule);
-        $this->actingAs(User::firstOrFail())->get('/admin/quotes/'.$quote->id)->assertOk()->assertSee('31 Mar 2030 at 14:30 (UK time)')->assertDontSee('Type of Enquiry');
+        $this->actingAs(User::factory()->create())->get('/admin/quotes/'.$quote->id)->assertOk()->assertSee('31 Mar 2030 at 14:30 (UK time)')->assertDontSee('Type of Enquiry');
         Bus::assertDispatchedAfterResponse(SendQuoteNotifications::class, fn ($job) => $job->quoteId === $quote->id);
     }
 

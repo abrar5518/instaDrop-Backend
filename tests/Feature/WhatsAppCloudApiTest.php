@@ -38,7 +38,7 @@ class WhatsAppCloudApiTest extends TestCase
 
         Http::assertSent(function ($request) {
             return $request->url() === 'https://graph.facebook.com/v25.0/1349924141534825/messages'
-                && $request->hasHeader('Authorization', 'Bearer EAAVToOfKKlEBSSJxC6uZBAHUMHfvEl9k55w6ISHF0CZAkmpaDLJwBTYYTtJxLivv92QYgrom89NiJpjF6zwM17LqpN8rvv3XOPlrmnM11n0ypcceySvf0Hwigjar31w2aqS6n9hqHR6Q0TUug9LcsQ7Skx0sEK5PxqqUjWjv0fvD6os4N6VvRkAqExHQZDZD')
+                && $request->hasHeader('Authorization', 'Bearer test-token')
                 && $request['template']['name'] === 'new_inquiry_admin_alert'
                 && $request['to'] === '447852502775';
         });

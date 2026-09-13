@@ -18,6 +18,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_KEY" value="base64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
@@ -29,7 +30,7 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="WHATSAPP_ENABLED" value="true"/>
         <env name="WHATSAPP_GRAPH_VERSION" value="v25.0"/>
-        <env name="WHATSAPP_ACCESS_TOKEN" value="EAAVToOfKKlEBSSJxC6uZBAHUMHfvEl9k55w6ISHF0CZAkmpaDLJwBTYYTtJxLivv92QYgrom89NiJpjF6zwM17LqpN8rvv3XOPlrmnM11n0ypcceySvf0Hwigjar31w2aqS6n9hqHR6Q0TUug9LcsQ7Skx0sEK5PxqqUjWjv0fvD6os4N6VvRkAqExHQZDZD"/>
+        <env name="WHATSAPP_ACCESS_TOKEN" value="test-token"/>
         <env name="WHATSAPP_PHONE_NUMBER_ID" value="1349924141534825"/>
         <env name="WHATSAPP_BUSINESS_ACCOUNT_ID" value="1391593043055339"/>
         <env name="WHATSAPP_ADMIN_NUMBER" value="447852502775"/>

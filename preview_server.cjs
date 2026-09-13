@@ -609,7 +609,7 @@ const server = http.createServer((req, res) => {
         </div>
 
         <form action="/admin/settings/update" method="POST" onsubmit="alert('System Settings and SMTP Mail Server Credentials Saved! Live emails active.'); return false;" class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-8 text-xs shadow-xs">
-          
+
           <!-- 1. PUBLIC CONTACT DETAILS -->
           <div class="space-y-4">
             <div class="border-b border-slate-100 pb-3">

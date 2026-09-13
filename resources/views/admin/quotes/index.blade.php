@@ -22,6 +22,7 @@
                         <th class="p-3.5">Customer Name</th>
                         <th class="p-3.5">Route</th>
                         <th class="p-3.5">Vehicle</th>
+                        <th class="p-3.5">Collection Slot</th>
                         <th class="p-3.5">Contact Preference</th>
                         <th class="p-3.5">Status</th>
                         <th class="p-3.5">Action</th>
@@ -34,6 +35,7 @@
                             <td class="p-3.5 font-bold text-slate-900">{{ $quote->first_name }} {{ $quote->last_name }}</td>
                             <td class="p-3.5 font-semibold text-slate-800">{{ $quote->collection_postcode }} ➔ {{ $quote->delivery_postcode }}</td>
                             <td class="p-3.5 capitalize font-semibold text-[#0a192f]">{{ str_replace('_', ' ', $quote->vehicle_type) }}</td>
+                            <td class="p-3.5 whitespace-nowrap font-semibold text-blue-700">{{ $quote->collection_schedule }}</td>
                             <td class="p-3.5 font-bold uppercase text-emerald-700">{{ $quote->contact_preference }}</td>
                             <td class="p-3.5">
                                 <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase {{ $quote->status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">

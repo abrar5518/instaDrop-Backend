@@ -13,7 +13,7 @@ class PublicSettingsController extends Controller
         $setting = SystemSetting::first();
 
         return response()->json([
-            'business_name' => $setting?->business_name ?? 'InstaDrop Courier Services Ltd',
+            'business_name' => $setting?->business_name ?? 'InstaDrop Courier Services',
             'phone' => $setting?->public_phone ?? '0800 123 4455',
             'whatsapp' => $setting?->admin_whatsapp_number ?? '+448001234455',
             'email' => $setting?->admin_notification_email ?? 'dispatch@instadrop.uk',

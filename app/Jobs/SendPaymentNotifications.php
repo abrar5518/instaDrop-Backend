@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SendPaymentNotifications implements ShouldQueue
 {
@@ -27,9 +28,16 @@ class SendPaymentNotifications implements ShouldQueue
             return;
         }
 
-        $email->sendPaymentConfirmationEmail($invoice);
-        $whatsApp->sendPaymentConfirmation($invoice);
-        $email->sendAdminPaymentReceivedEmail($invoice);
-        $whatsApp->sendAdminPaymentReceivedAlert($invoice);
+        $results = [
+            'customer_email' => $email->sendPaymentConfirmationEmail($invoice),
+            'customer_whatsapp' => $whatsApp->sendPaymentConfirmation($invoice),
+            'admin_email' => $email->sendAdminPaymentReceivedEmail($invoice),
+            'admin_whatsapp' => $whatsApp->sendAdminPaymentReceivedAlert($invoice),
+        ];
+
+        Log::info('Payment notification delivery completed', [
+            'invoice' => $invoice->invoice_number,
+            'results' => $results,
+        ]);
     }
 }

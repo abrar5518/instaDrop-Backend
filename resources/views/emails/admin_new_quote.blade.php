@@ -79,7 +79,7 @@
         <a href="http://localhost:8000/admin/quotes" class="cta-btn">Open Admin Inspector & Set Price ➔</a>
 
         <div class="footer">
-            InstaDrop Courier Services Ltd • Automated Dispatch System Notification
+            InstaDrop Courier Services • Automated Dispatch System Notification
         </div>
     </div>
 </body>

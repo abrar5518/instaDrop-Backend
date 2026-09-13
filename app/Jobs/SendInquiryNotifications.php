@@ -25,7 +25,7 @@ class SendInquiryNotifications implements ShouldQueue
         $emailSent = $email->sendAdminInquiryEmail($inquiry);
         $whatsAppSent = $whatsApp->sendAdminInquiryAlert($inquiry);
 
-        if (!$emailSent || !$whatsAppSent) {
+        if (!$emailSent || (config('services.whatsapp.enabled') && !$whatsAppSent)) {
             throw new \RuntimeException("Admin inquiry notifications failed for inquiry {$inquiry->id}.");
         }
     }

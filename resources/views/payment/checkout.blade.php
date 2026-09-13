@@ -14,7 +14,7 @@
         }
     </style>
     <!-- OFFICIAL PAYPAL JS SDK INTEGRATION -->
-    <script src="https://www.paypal.com/sdk/js?client-id=BAA4lZysh2qOP6owh18e_QDB4cOAMTtaCqu56DkwQATYEdnWeElOcIZ435-LpKJiYQhP2HhZiokONbViXA&currency=GBP"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id={{ urlencode(config('services.paypal.client_id', '')) }}&currency=GBP"></script>
 </head>
 <body class="bg-[#0a192f] text-slate-100 min-h-screen flex items-center justify-center p-4 sm:p-6">
     <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8">

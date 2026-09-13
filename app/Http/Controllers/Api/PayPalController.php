@@ -37,9 +37,13 @@ class PayPalController extends Controller
      */
     protected function getAccessToken($setting): ?string
     {
-        $clientId = $setting->paypal_client_id ?? 'BAA4lZysh2qOP6owh18e_QDB4cOAMTtaCqu56DkwQATYEdnWeElOcIZ435-LpKJiYQhP2HhZiokONbViXA';
-        $secret = $setting->paypal_secret ?? 'EK2K4d8PjmiYJdSWsdt3Y7LMC5YCLnoaYXCnSUHuTatxppMgLo7YyPQ-WqMAkCQw1_zDQJhTsed6KgE7';
-        $mode = $setting->paypal_mode ?? 'sandbox';
+        $clientId = $setting?->paypal_client_id;
+        $secret = $setting?->paypal_secret;
+        $mode = $setting?->paypal_mode ?? 'sandbox';
+
+        if (!$clientId || !$secret) {
+            return null;
+        }
 
         $baseUrl = $this->getPayPalBaseUrl($mode);
 
@@ -73,7 +77,7 @@ class PayPalController extends Controller
         ]);
 
         $setting = SystemSetting::first();
-        $mode = $setting->paypal_mode ?? 'sandbox';
+        $mode = $setting?->paypal_mode ?? 'sandbox';
         $baseUrl = $this->getPayPalBaseUrl($mode);
 
         $accessToken = $this->getAccessToken($setting);

@@ -2,6 +2,17 @@
 
 @section('content')
 <div class="space-y-6 w-full">
+    @if ($errors->any())
+        <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs text-red-800" role="alert">
+            <p class="font-extrabold">The payment link could not be sent:</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- Top Breadcrumb Navigation -->
     <div class="flex items-center justify-between border-b border-slate-200/80 pb-4">
         <a href="{{ route('admin.quotes.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">
@@ -27,7 +38,7 @@
             <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-4 shadow-sm">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div>
-                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customer Submission Profile</span>
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Customer Profile</span>
                         <h1 class="text-2xl font-extrabold text-slate-900 font-display mt-0.5">
                             {{ $quote->first_name }} {{ $quote->last_name }}
                         </h1>
@@ -40,7 +51,7 @@
                     </div>
                 </div>
 
-                <!-- Pickup & Dropoff Route Graphic & Distance Estimator -->
+                <!-- Pickup & Dropoff Route Graphic -->
                 <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/60 flex items-center justify-between gap-4 text-xs">
                     <div class="space-y-1">
                         <span class="text-slate-400 font-semibold block">Collection Postcode</span>
@@ -49,7 +60,7 @@
                     <div class="flex-1 flex items-center justify-center px-4">
                         <div class="w-full h-0.5 bg-slate-300 relative flex items-center justify-center">
                             <span class="bg-[#0a192f] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">
-                                {{ str_replace('_', ' ', $quote->vehicle_type) }} • Est. 205 Miles
+                                {{ str_replace('_', ' ', $quote->vehicle_type) }}
                             </span>
                         </div>
                     </div>
@@ -107,7 +118,7 @@
                     </div>
 
                     <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 md:col-span-3">
-                        <span class="text-slate-400 block font-semibold">Requested collection date & time:</span>
+                        <span class="text-slate-400 block font-semibold">10. Requested Collection Date & Time:</span>
                         <strong class="text-blue-700 font-bold">{{ $quote->collection_schedule }}</strong>
                     </div>
 
@@ -122,65 +133,52 @@
 
         </div>
 
-        <!-- RIGHT COLUMN: Sticky Quotation Selling Price, Driver Cost & 1-Click Clipboard Copy Buttons (1/3 Width) -->
+        <!-- RIGHT COLUMN: Sticky Quotation Selling Price & Invoice Generator (1/3 Width) -->
         <div class="space-y-6">
             
             <form action="{{ route('admin.invoices.generate', $quote->id) }}" method="POST" class="bg-white border-2 border-[#0a192f] rounded-3xl p-6 space-y-6 shadow-md sticky top-6">
                 @csrf
                 <div class="border-b border-slate-100 pb-3">
                     <span class="text-[10px] font-black text-[#0a192f] bg-[#c6ff00] px-3 py-1 rounded-full uppercase tracking-wider">
-                        BROKERAGE PRICING TOOL
+                        DISPATCH PRICING TOOL
                     </span>
                     <h3 class="text-base font-extrabold text-slate-900 font-display mt-2">
                         Quotation Generator
                     </h3>
-                    <p class="text-xs text-slate-500">Enter final selling price & driver payout to calculate net profit margin.</p>
+                    <p class="text-xs text-slate-500">Enter final selling price & dispatch payment invoice to customer.</p>
                 </div>
 
                 <div class="space-y-4 text-xs">
-                    <!-- Distance & Tariff Recommendation Guide -->
-                    <div class="bg-blue-50 border border-blue-200 p-3.5 rounded-xl text-blue-900 space-y-1">
-                        <span class="font-bold block text-[11px] uppercase tracking-wider text-blue-700">💡 Suggested Rate Calculator</span>
-                        <p class="text-xs font-semibold">Est. Distance: <strong>205 Miles</strong></p>
-                        <p class="text-xs font-semibold">Suggested Base Price: <strong class="text-blue-900 font-extrabold">£180.00 (Excl. VAT)</strong></p>
+                    <div>
+                        <label class="block text-slate-700 font-bold mb-1">Full Pickup Address</label>
+                        <input type="text" name="pickup_address" value="{{ old('pickup_address', 'Unit 4 Logistics Park, '.$quote->collection_postcode) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900">
                     </div>
 
                     <div>
-                        <label class="block text-slate-700 font-bold mb-1">Customer Selling Price (£ Excl. VAT)</label>
-                        <input type="number" step="0.01" id="selling-price" name="quoted_selling_price" value="180.00" required class="w-full bg-slate-50 border-2 border-[#0a192f] rounded-xl px-3.5 py-3 text-slate-900 font-bold text-sm">
+                        <label class="block text-slate-700 font-bold mb-1">Full Delivery Address</label>
+                        <input type="text" name="delivery_address" value="{{ old('delivery_address', 'Building 12 Commerce Center, '.$quote->delivery_postcode) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900">
                     </div>
 
                     <div>
-                        <label class="block text-slate-700 font-bold mb-1">Driver / Rider Payout Cost (£)</label>
-                        <input type="number" step="0.01" id="driver-cost" name="driver_cost" value="120.00" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-semibold">
+                        <label class="block text-slate-700 font-bold mb-1">Quoted Selling Price (£ Excl. VAT)</label>
+                        <input type="number" step="0.01" min="1" name="quoted_selling_price" value="{{ old('quoted_selling_price') }}" placeholder="e.g. 150.00" required class="w-full bg-slate-50 border-2 border-[#0a192f] rounded-xl px-3.5 py-3 text-slate-900 font-bold text-sm">
                     </div>
 
-                    <!-- DYNAMIC NET PROFIT MARGIN BADGE -->
-                    <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl text-emerald-900 space-y-1 font-semibold">
-                        <div class="flex justify-between items-center">
-                            <span>Auto Net Profit Margin:</span>
-                            <span class="bg-emerald-600 text-white font-extrabold text-xs px-3 py-1 rounded-full shadow-xs">
-                                £60.00 Profit (33.3%)
-                            </span>
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1 text-slate-600 font-medium">
+                        <div class="flex justify-between">
+                            <span>Standard VAT ({{ number_format($vatRate, 2) }}%):</span>
+                            <span>Auto-Calculated</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-slate-900">
+                            <span>Delivery Status:</span>
+                            <span class="text-amber-600 font-bold">Pending Payment</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-2 pt-2">
-                    <button type="submit" class="w-full py-4 rounded-2xl bg-[#0a192f] hover:bg-[#051329] text-white font-extrabold text-xs transition-colors shadow-md flex items-center justify-center gap-2">
-                        <span>⚡ Generate Invoice & Save Order</span>
-                    </button>
-
-                    <!-- 1-CLICK WHATSAPP DISPATCH BUTTON -->
-                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $quote->phone) }}?text={{ urlencode('Hello ' . $quote->first_name . ', your InstaDrop delivery quote (#' . $quote->quote_number . ') from ' . $quote->collection_postcode . ' to ' . $quote->delivery_postcode . ' is £180.00 + VAT. Click to view invoice and pay online: http://localhost:8000/pay/PAY-DEMO') }}" target="_blank" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors shadow-md flex items-center justify-center gap-2">
-                        <span>💬 Send Quote Instant via WhatsApp</span>
-                    </a>
-
-                    <!-- 1-CLICK CLIPBOARD COPY BUTTON -->
-                    <button type="button" onclick="navigator.clipboard.writeText('http://localhost:8000/pay/PAY-DEMO'); alert('Payment Checkout Link copied to Clipboard!');" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors flex items-center justify-center gap-1.5">
-                        <span>📋 Copy Checkout Link to Clipboard</span>
-                    </button>
-                </div>
+                <button type="submit" class="w-full py-4 rounded-2xl bg-[#0a192f] hover:bg-[#051329] text-white font-extrabold text-xs transition-colors shadow-md flex items-center justify-center gap-2">
+                    <span>⚡ Send Payment Link to {{ $quote->first_name }}</span>
+                </button>
             </form>
 
         </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\QuoteRequest;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 
 class QuoteRequestController extends Controller
@@ -16,7 +17,9 @@ class QuoteRequestController extends Controller
 
     public function show(QuoteRequest $quote)
     {
-        return view('admin.quotes.show', compact('quote'));
+        $vatRate = (float) (SystemSetting::query()->value('vat_rate') ?? 20);
+
+        return view('admin.quotes.show', compact('quote', 'vatRate'));
     }
 
     public function updateStatus(Request $request, QuoteRequest $quote)

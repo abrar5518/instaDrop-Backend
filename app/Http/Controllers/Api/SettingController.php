@@ -14,7 +14,7 @@ class SettingController extends Controller
     public function show()
     {
         $setting = SystemSetting::firstOrCreate([], [
-            'business_name'         => 'InstaDrop Courier Services Ltd',
+            'business_name'         => 'InstaDrop Courier Services',
             'hotline_phone'         => '0800 123 4455',
             'support_email'         => 'dispatch@instadrop.co.uk',
             'office_address'        => '100 Pall Mall, St. James\'s, London, SW1Y 5NQ',

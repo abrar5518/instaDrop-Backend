@@ -5,14 +5,22 @@ namespace Tests\Feature;
 use App\Models\Blog;
 use App\Models\User;
 use App\Services\BlogHtmlSanitizer;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class BlogManagementTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
+
+    private User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->admin = User::factory()->create();
+    }
 
     private function payload(array $overrides = []): array
     {
@@ -37,7 +45,7 @@ class BlogManagementTest extends TestCase
     public function test_draft_publish_update_unpublish_and_delete_lifecycle(): void
     {
         Storage::fake('public');
-        $this->actingAs(User::firstOrFail());
+        $this->actingAs($this->admin);
         $data = $this->payload();
         $this->post('/admin/blogs', $data)->assertSessionHasNoErrors()->assertRedirect();
         $blog = Blog::where('slug', $data['slug'])->firstOrFail();
@@ -62,8 +70,12 @@ class BlogManagementTest extends TestCase
     public function test_validation_rejects_duplicate_slugs_and_non_image_uploads(): void
     {
         Storage::fake('public');
-        $this->actingAs(User::firstOrFail());
-        $this->post('/admin/blogs', $this->payload(['slug' => Blog::firstOrFail()->slug]))->assertSessionHasErrors('slug');
+        $this->actingAs($this->admin);
+        $existing = Blog::create([
+            'title' => 'Existing article', 'slug' => 'existing-article', 'category' => 'Testing',
+            'excerpt' => 'Existing excerpt', 'content' => '<p>Existing content</p>', 'status' => 'draft',
+        ]);
+        $this->post('/admin/blogs', $this->payload(['slug' => $existing->slug]))->assertSessionHasErrors('slug');
         $this->postJson('/admin/blogs/upload', ['files' => [UploadedFile::fake()->create('payload.svg', 1, 'image/svg+xml')]])->assertUnprocessable();
         $this->post('/admin/blogs', $this->payload(['content' => '<script>alert(1)</script>']))->assertSessionHasErrors('content');
     }
@@ -71,7 +83,7 @@ class BlogManagementTest extends TestCase
     public function test_editor_uploads_and_sanitization_keep_rich_content_safe(): void
     {
         Storage::fake('public');
-        $this->actingAs(User::firstOrFail());
+        $this->actingAs($this->admin);
         $this->postJson('/admin/blogs/upload', ['files' => [UploadedFile::fake()->image('inline.png')]])->assertOk()->assertJsonPath('success', true);
         $safe = app(BlogHtmlSanitizer::class)->clean('<h2>Heading</h2><p style="text-align:center"><b>Bold</b><a href="/contact">Internal</a><a href="javascript:alert(1)">Bad</a></p><table><tr><td>Data</td></tr></table><img src="https://example.com/image.jpg" onerror="alert(1)"><script>alert(1)</script>');
         $this->assertStringContainsString('<h2>Heading</h2>', $safe);

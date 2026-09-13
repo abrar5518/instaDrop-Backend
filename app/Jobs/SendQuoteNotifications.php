@@ -27,7 +27,7 @@ class SendQuoteNotifications implements ShouldQueue
         $adminEmailSent = $email->sendAdminQuoteReceivedEmail($quote);
         $adminWhatsAppSent = $whatsApp->sendAdminQuoteReceivedAlert($quote);
 
-        if (!$adminEmailSent || !$adminWhatsAppSent) {
+        if (!$adminEmailSent || (config('services.whatsapp.enabled') && !$adminWhatsAppSent)) {
             throw new \RuntimeException("Admin quotation notifications failed for {$quote->quote_number}.");
         }
     }

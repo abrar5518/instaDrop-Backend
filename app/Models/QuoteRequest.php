@@ -22,6 +22,7 @@ class QuoteRequest extends Model
         'delivery_postcode',
         'vehicle_type',
         'timescale',
+        'enquiry_type',
         'collection_date',
         'collection_time',
         'additional_info',

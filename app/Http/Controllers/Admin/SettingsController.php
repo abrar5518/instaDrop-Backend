@@ -4,11 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
+use App\Services\PayPalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class SettingsController extends Controller
 {
+    public function __construct(private PayPalService $payPalService) {}
+
     public function index()
     {
         $setting = SystemSetting::firstOrCreate([], $this->defaults());
@@ -60,6 +65,7 @@ class SettingsController extends Controller
         ]);
 
         $setting = SystemSetting::firstOrCreate([], $this->defaults());
+        $this->verifyChangedPayPalConfiguration($validated, $setting);
 
         foreach (['facebook', 'x', 'instagram', 'tiktok', 'youtube', 'linkedin', 'google_tag_manager', 'google_analytics', 'meta_pixel'] as $name) {
             $validated[$name.'_enabled'] = $request->boolean($name.'_enabled');
@@ -105,6 +111,42 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', 'System settings updated successfully.');
+    }
+
+    private function verifyChangedPayPalConfiguration(array $validated, SystemSetting $setting): void
+    {
+        $clientId = trim((string) ($validated['paypal_client_id'] ?? $setting->paypal_client_id));
+        $secret = trim((string) ($validated['paypal_secret'] ?? $setting->paypal_secret));
+        $mode = ($validated['paypal_mode'] ?? $setting->paypal_mode ?? 'sandbox') === 'live' ? 'live' : 'sandbox';
+        $changed = $clientId !== trim((string) $setting->paypal_client_id)
+            || filled($validated['paypal_secret'] ?? null)
+            || $mode !== ($setting->paypal_mode ?? 'sandbox');
+
+        if (! $changed && ($clientId === '' || $secret === '')) {
+            return;
+        }
+
+        if ($clientId === '' || $secret === '') {
+            throw ValidationException::withMessages([
+                'paypal_client_id' => 'Both the PayPal client ID and secret are required to enable PayPal.',
+            ]);
+        }
+
+        if (! $changed) {
+            return;
+        }
+
+        try {
+            $this->payPalService->verifyCredentials([
+                'client_id' => $clientId,
+                'secret' => $secret,
+                'mode' => $mode,
+            ]);
+        } catch (Throwable) {
+            throw ValidationException::withMessages([
+                'paypal_client_id' => 'PayPal rejected these credentials for the selected mode. Nothing was changed.',
+            ]);
+        }
     }
 
     private function normaliseTrackingId(mixed $value, bool $uppercase = true): ?string

@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
+use Throwable;
 
 class SystemSetting extends Model
 {
@@ -26,6 +29,35 @@ class SystemSetting extends Model
         'google_tag_manager_enabled', 'google_analytics_id',
         'google_analytics_enabled', 'meta_pixel_id', 'meta_pixel_enabled',
     ];
+
+    protected $hidden = [
+        'mail_password',
+        'paypal_secret',
+        'whatsapp_api_token',
+        'stripe_secret_key',
+    ];
+
+    protected function paypalSecret(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): ?string {
+                if (blank($value)) {
+                    return null;
+                }
+
+                try {
+                    return Crypt::decryptString($value);
+                } catch (Throwable) {
+                    // Existing installations may still contain a legacy plaintext value.
+                    // It is encrypted automatically the next time it is saved.
+                    return $value;
+                }
+            },
+            set: fn (?string $value): ?string => blank($value)
+                ? null
+                : Crypt::encryptString(trim($value)),
+        );
+    }
 
     protected function casts(): array
     {

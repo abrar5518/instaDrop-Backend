@@ -82,7 +82,7 @@ class QuoteInvoicePaymentFlowTest extends TestCase
         $quote = $this->quote();
 
         $this->actingAs(User::factory()->create())
-            ->get('/admin/quotes/' . $quote->id)
+            ->get('/admin/quotes/'.$quote->id)
             ->assertOk()
             ->assertSee('Full Pickup Address')
             ->assertSee('Full Delivery Address')
@@ -112,7 +112,7 @@ class QuoteInvoicePaymentFlowTest extends TestCase
         $this->app->instance(WhatsAppService::class, $whatsApp);
 
         $this->actingAs(User::factory()->create())
-            ->post('/admin/quotes/' . $quote->id . '/invoice', [
+            ->post('/admin/quotes/'.$quote->id.'/invoice', [
                 'pickup_address' => 'Unit 4 Logistics Park, M1 1AE',
                 'delivery_address' => 'Building 12 Commerce Center, SW1A 1AA',
                 'quoted_selling_price' => '150.00',
@@ -151,7 +151,7 @@ class QuoteInvoicePaymentFlowTest extends TestCase
         $invoice->order->update(['status' => 'pending_payment']);
 
         $payPal = Mockery::mock(PayPalService::class);
-        $payPal->shouldReceive('captureOrder')->once()->with('PAYPAL-ORDER-01')->andReturn([
+        $payPal->shouldReceive('captureOrder')->once()->with('PAYPALORDER01')->andReturn([
             'status' => 'COMPLETED',
             'purchase_units' => [[
                 'reference_id' => $invoice->invoice_number,
@@ -168,11 +168,41 @@ class QuoteInvoicePaymentFlowTest extends TestCase
 
         $this->postJson('/api/v1/payments/paypal/capture', [
             'payment_token' => $invoice->payment_token,
-            'paypal_order_id' => 'PAYPAL-ORDER-01',
+            'paypal_order_id' => 'PAYPALORDER01',
         ])->assertOk()->assertJsonPath('success', true);
 
         $this->assertSame('paid', $invoice->fresh()->status);
         $this->assertSame('paid', $invoice->order->fresh()->status);
         Bus::assertDispatchedSync(SendPaymentNotifications::class, fn ($job) => $job->invoiceId === $invoice->id);
+    }
+
+    public function test_paypal_capture_rejects_an_unverified_capture_status(): void
+    {
+        $invoice = $this->paidInvoice();
+        $invoice->update(['status' => 'unpaid', 'payment_method' => null, 'payment_transaction_id' => null, 'paid_at' => null]);
+        $invoice->order->update(['status' => 'pending_payment']);
+
+        $payPal = Mockery::mock(PayPalService::class);
+        $payPal->shouldReceive('captureOrder')->once()->andReturn([
+            'status' => 'COMPLETED',
+            'purchase_units' => [[
+                'reference_id' => $invoice->invoice_number,
+                'invoice_id' => $invoice->invoice_number,
+                'payments' => ['captures' => [[
+                    'id' => 'PAYPAL-CAPTURE-02',
+                    'status' => 'PENDING',
+                    'amount' => ['currency_code' => 'GBP', 'value' => '180.00'],
+                ]]],
+            ]],
+        ]);
+        $this->app->instance(PayPalService::class, $payPal);
+
+        $this->postJson('/api/v1/payments/paypal/capture', [
+            'payment_token' => $invoice->payment_token,
+            'paypal_order_id' => 'PAYPALORDER02',
+        ])->assertUnprocessable()->assertJsonPath('message', 'PayPal payment could not be verified.');
+
+        $this->assertSame('unpaid', $invoice->fresh()->status);
+        $this->assertSame('pending_payment', $invoice->order->fresh()->status);
     }
 }

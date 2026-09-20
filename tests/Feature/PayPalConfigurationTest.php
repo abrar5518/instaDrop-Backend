@@ -66,4 +66,28 @@ class PayPalConfigurationTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->url() === 'https://api-m.sandbox.paypal.com/v1/oauth2/token'
             && $request->hasHeader('Authorization', 'Basic '.base64_encode('environment-client-id:environment-secret')));
     }
+
+    public function test_capture_sends_the_empty_json_object_required_by_paypal(): void
+    {
+        SystemSetting::query()->create([
+            'paypal_client_id' => 'live-client-id',
+            'paypal_secret' => 'live-client-secret',
+            'paypal_mode' => 'live',
+        ]);
+
+        Http::fake([
+            'https://api-m.paypal.com/v1/oauth2/token' => Http::response(['access_token' => 'access-token']),
+            'https://api-m.paypal.com/v2/checkout/orders/PAYPALORDER01/capture' => Http::response([
+                'id' => 'PAYPALORDER01',
+                'status' => 'COMPLETED',
+            ]),
+        ]);
+
+        $capture = app(PayPalService::class)->captureOrder('PAYPALORDER01');
+
+        $this->assertSame('COMPLETED', $capture['status']);
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://api-m.paypal.com/v2/checkout/orders/PAYPALORDER01/capture'
+            && $request->body() === '{}'
+            && $request->hasHeader('Content-Type', 'application/json'));
+    }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AnalyticsSettingController;
 use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\ContentPageController;
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\OrderTrackingController;
 use App\Http\Controllers\Api\PaymentController;
@@ -17,6 +18,9 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/blogs', [BlogController::class, 'index']);
     Route::get('/blogs/{slug}', [BlogController::class, 'show']);
+    Route::get('/services', [ContentPageController::class, 'services']);
+    Route::get('/services/{slug}', [ContentPageController::class, 'service']);
+    Route::get('/managed-pages/{slug}', [ContentPageController::class, 'managedPage']);
     Route::post('/inquiries', [InquiryController::class, 'store'])->middleware('throttle:10,1');
     Route::post('/quotes', [QuoteController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/tracking/{tracking_number}', [OrderTrackingController::class, 'show'])->middleware('throttle:30,1');

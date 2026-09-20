@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SEO;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContentPage;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
@@ -12,15 +13,11 @@ class SitemapController extends Controller
      */
     public function index(): Response
     {
-        $baseUrl = rtrim(config('app.url', 'http://localhost:8000'), '/');
         $frontendUrl = rtrim(config('app.frontend_url', 'http://localhost:3000'), '/');
 
         $pages = [
             '/',
-            '/same-day-delivery',
-            '/pallet-delivery',
-            '/medical-courier',
-            '/legal-courier',
+            '/services',
             '/instant-quote',
             '/business-accounts',
             '/coverage',
@@ -30,6 +27,13 @@ class SitemapController extends Controller
             '/terms-and-conditions',
             '/privacy-policy',
         ];
+
+        $servicePages = ContentPage::query()->published()->where('page_type', 'service')
+            ->where('noindex', false)->orderBy('sort_order')->get(['slug', 'updated_at'])
+            ->map(fn (ContentPage $page) => [
+                'path' => '/'.$page->slug,
+                'lastmod' => $page->updated_at?->toAtomString() ?? now()->toAtomString(),
+            ]);
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
@@ -43,6 +47,15 @@ class SitemapController extends Controller
             $xml .= '    <lastmod>' . now()->toAtomString() . '</lastmod>' . "\n";
             $xml .= '    <changefreq>weekly</changefreq>' . "\n";
             $xml .= '    <priority>' . $priority . '</priority>' . "\n";
+            $xml .= '  </url>' . "\n";
+        }
+
+        foreach ($servicePages as $page) {
+            $xml .= '  <url>' . "\n";
+            $xml .= '    <loc>' . htmlspecialchars($frontendUrl.$page['path']) . '</loc>' . "\n";
+            $xml .= '    <lastmod>' . $page['lastmod'] . '</lastmod>' . "\n";
+            $xml .= '    <changefreq>weekly</changefreq>' . "\n";
+            $xml .= '    <priority>0.9</priority>' . "\n";
             $xml .= '  </url>' . "\n";
         }
 

@@ -3,7 +3,7 @@
 use App\Http\Controllers\Admin\AnalyticsSettingController as AdminAnalyticsController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BlogController;
-use App\Http\Controllers\Admin\ContentPageController;
+use App\Http\Controllers\Admin\CoverageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\InvoiceController;
@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PodController;
 use App\Http\Controllers\Admin\QuoteRequestController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\SEO\LlmsController;
 use App\Http\Controllers\SEO\RobotsController;
 use App\Http\Controllers\SEO\SitemapController;
@@ -57,12 +58,11 @@ Route::middleware('auth')->prefix('admin')->as('admin.')->group(function () {
     Route::post('/blogs/upload', [BlogController::class, 'upload'])->name('blogs.upload');
     Route::resource('blogs', BlogController::class)->except(['show']);
 
-    Route::get('/content-pages', [ContentPageController::class, 'index'])->name('content-pages.index');
-    Route::get('/content-pages/create', [ContentPageController::class, 'create'])->name('content-pages.create');
-    Route::post('/content-pages', [ContentPageController::class, 'store'])->name('content-pages.store');
-    Route::get('/content-pages/{contentPage}/edit', [ContentPageController::class, 'edit'])->name('content-pages.edit');
-    Route::put('/content-pages/{contentPage}', [ContentPageController::class, 'update'])->name('content-pages.update');
-    Route::delete('/content-pages/{contentPage}', [ContentPageController::class, 'destroy'])->name('content-pages.destroy');
+    Route::get('/services/directory', [ServiceController::class, 'editDirectory'])->name('services.directory.edit');
+    Route::put('/services/directory', [ServiceController::class, 'updateDirectory'])->name('services.directory.update');
+    Route::resource('services', ServiceController::class)->except(['show']);
+    Route::get('/coverage', [CoverageController::class, 'edit'])->name('coverage.edit');
+    Route::put('/coverage', [CoverageController::class, 'update'])->name('coverage.update');
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\SEO;
 
 use App\Http\Controllers\Controller;
-use App\Models\ContentPage;
+use App\Models\Service;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
@@ -28,9 +28,9 @@ class SitemapController extends Controller
             '/privacy-policy',
         ];
 
-        $servicePages = ContentPage::query()->published()->where('page_type', 'service')
+        $servicePages = Service::query()->published()
             ->where('noindex', false)->orderBy('sort_order')->get(['slug', 'updated_at'])
-            ->map(fn (ContentPage $page) => [
+            ->map(fn (Service $page) => [
                 'path' => '/'.$page->slug,
                 'lastmod' => $page->updated_at?->toAtomString() ?? now()->toAtomString(),
             ]);

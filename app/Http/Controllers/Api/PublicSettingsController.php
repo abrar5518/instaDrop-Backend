@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
-use Illuminate\Support\Facades\Storage;
 
 class PublicSettingsController extends Controller
 {
@@ -19,9 +18,9 @@ class PublicSettingsController extends Controller
             'email' => $setting?->admin_notification_email ?? 'dispatch@instadrop.uk',
             'address' => $setting?->business_address ?? 'Central Logistics Park, M25 Hub Highway, London UK',
             'branding' => [
-                'header_logo_url' => $setting?->header_logo_path ? url(Storage::url($setting->header_logo_path)) : null,
-                'footer_logo_url' => $setting?->footer_logo_path ? url(Storage::url($setting->footer_logo_path)) : null,
-                'favicon_url' => $setting?->favicon_path ? url(Storage::url($setting->favicon_path)) : null,
+                'header_logo_url' => $this->publicAssetUrl($setting?->header_logo_path),
+                'footer_logo_url' => $this->publicAssetUrl($setting?->footer_logo_path),
+                'favicon_url' => $this->publicAssetUrl($setting?->favicon_path),
             ],
             'social_links' => [
                 'facebook' => $setting?->facebook_enabled ? $setting->facebook_url : null,
@@ -37,5 +36,10 @@ class PublicSettingsController extends Controller
                 'meta_pixel_id' => $setting?->meta_pixel_enabled ? $setting->meta_pixel_id : null,
             ],
         ]);
+    }
+
+    private function publicAssetUrl(?string $path): ?string
+    {
+        return $path ? url('/media/'.ltrim($path, '/')) : null;
     }
 }

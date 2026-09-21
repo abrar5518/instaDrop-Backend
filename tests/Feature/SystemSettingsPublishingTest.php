@@ -66,8 +66,20 @@ class SystemSettingsPublishingTest extends TestCase
         Storage::disk('public')->assertExists($setting->footer_logo_path);
         Storage::disk('public')->assertExists($setting->favicon_path);
 
+        $this->get('/media/'.$setting->header_logo_path)
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
+        $this->get('/admin/settings')
+            ->assertOk()
+            ->assertSee('/media/'.$setting->header_logo_path, false)
+            ->assertSee('/media/'.$setting->footer_logo_path, false)
+            ->assertSee('/media/'.$setting->favicon_path, false);
+
         $this->getJson('/api/v1/settings/public')
             ->assertOk()
+            ->assertJsonPath('branding.header_logo_url', url('/media/'.$setting->header_logo_path))
+            ->assertJsonPath('branding.footer_logo_url', url('/media/'.$setting->footer_logo_path))
+            ->assertJsonPath('branding.favicon_url', url('/media/'.$setting->favicon_path))
             ->assertJsonPath('social_links.facebook', 'https://facebook.com/instadrop')
             ->assertJsonPath('social_links.instagram', 'https://instagram.com/instadrop')
             ->assertJsonPath('social_links.x', null)

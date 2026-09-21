@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PodController;
 use App\Http\Controllers\Admin\QuoteRequestController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\PublicAssetController;
 use App\Http\Controllers\SEO\LlmsController;
 use App\Http\Controllers\SEO\RobotsController;
 use App\Http\Controllers\SEO\SitemapController;
@@ -21,6 +22,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/robots.txt', [RobotsController::class, 'index']);
 Route::get('/llms.txt', [LlmsController::class, 'index']);
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+
+// Normally Nginx serves the public storage symlink directly. This route keeps
+// uploaded assets available if a release is activated before that link exists.
+Route::get('/media/{path}', [PublicAssetController::class, 'show'])
+    ->where('path', '.*')
+    ->name('public-assets.show');
 
 Route::get('/', fn () => redirect()->route('admin.dashboard'));
 

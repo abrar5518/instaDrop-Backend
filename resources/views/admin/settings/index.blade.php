@@ -81,7 +81,7 @@
                         <label for="{{ $input }}" class="block font-bold text-slate-700">{{ $label }}</label>
                         @if ($setting->{$column})
                             <div class="h-20 rounded-xl bg-slate-100 p-3 flex items-center justify-center">
-                                <img src="{{ Storage::url($setting->{$column}) }}" alt="Current {{ strtolower($label) }}" class="max-h-full max-w-full object-contain">
+                                <img src="{{ url('/media/'.ltrim($setting->{$column}, '/')) }}" alt="Current {{ strtolower($label) }}" class="max-h-full max-w-full object-contain">
                             </div>
                         @else
                             <div class="h-20 rounded-xl bg-slate-100 flex items-center justify-center text-center text-slate-400">Default branding active</div>

@@ -37,7 +37,7 @@ class SitemapController extends Controller
         $servicePages = Service::query()->published()
             ->where('noindex', false)->orderBy('sort_order')->get(['slug', 'updated_at'])
             ->map(fn (Service $page) => [
-                'path' => '/'.$page->slug,
+                'path' => '/services/'.$page->slug,
                 'lastmod' => $page->updated_at?->toAtomString() ?? now()->toAtomString(),
             ]);
 

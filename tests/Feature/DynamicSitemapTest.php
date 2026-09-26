@@ -53,7 +53,8 @@ class DynamicSitemapTest extends TestCase
             ->assertOk()
             ->assertHeader('content-type', 'application/xml; charset=UTF-8')
             ->assertSee('https://instadrop.uk/blog/published-sitemap-article', false)
-            ->assertSee('https://instadrop.uk/published-sitemap-service', false)
+            ->assertSee('https://instadrop.uk/services/published-sitemap-service', false)
+            ->assertDontSee('https://instadrop.uk/published-sitemap-service', false)
             ->assertDontSee('noindex-sitemap-article')
             ->assertDontSee('draft-sitemap-service');
     }

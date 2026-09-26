@@ -413,9 +413,9 @@ return new class extends Migration
             ['title' => 'Do I get proof of delivery?', 'body' => 'Delivery-status or POD information is provided where available and agreed.'],
         ]);
         $add(['section_type' => 'related', 'anchor_id' => 'related', 'heading' => 'Explore other courier services', 'intro' => 'Compare specialist handling and delivery patterns before booking.', 'show_in_sidebar' => false, 'sort_order' => 7], [
-            ['title' => 'Dedicated vehicle delivery', 'link_label' => 'Dedicated vehicle delivery', 'link_url' => '/dedicated-vehicle-delivery'],
-            ['title' => 'Medical courier', 'link_label' => 'Medical courier', 'link_url' => '/medical-courier'],
-            ['title' => 'Legal courier', 'link_label' => 'Legal courier', 'link_url' => '/legal-courier'],
+            ['title' => 'Dedicated vehicle delivery', 'link_label' => 'Dedicated vehicle delivery', 'link_url' => '/services/dedicated-vehicle-delivery'],
+            ['title' => 'Medical courier', 'link_label' => 'Medical courier', 'link_url' => '/services/medical-courier'],
+            ['title' => 'Legal courier', 'link_label' => 'Legal courier', 'link_url' => '/services/legal-courier'],
         ]);
     }
 

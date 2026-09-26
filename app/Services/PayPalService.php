@@ -112,10 +112,15 @@ class PayPalService
     {
         return $this->client()
             ->withHeaders(['PayPal-Request-Id' => 'capture-'.$orderId])
-            ->contentType('application/json')
-            ->send('POST', '/v2/checkout/orders/'.rawurlencode($orderId).'/capture', [
-                'body' => '{}',
-            ])
+            ->withBody('{}', 'application/json')
+            ->send('POST', '/v2/checkout/orders/'.rawurlencode($orderId).'/capture')
+            ->throw()->json();
+    }
+
+    public function getOrder(string $orderId): array
+    {
+        return $this->client()
+            ->get('/v2/checkout/orders/'.rawurlencode($orderId))
             ->throw()->json();
     }
 }

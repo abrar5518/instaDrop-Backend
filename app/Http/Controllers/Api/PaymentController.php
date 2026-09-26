@@ -96,28 +96,39 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Invoice has already been paid.', 'invoice_number' => $invoice->invoice_number]);
         }
 
+        $captureFailed = false;
         try {
             $capture = $this->payPalService->captureOrder($validated['paypal_order_id']);
         } catch (Throwable $e) {
-            Log::error('PayPal capture failed', ['invoice' => $invoice->invoice_number, 'message' => $e->getMessage()]);
+            $captureFailed = true;
+            Log::warning('PayPal capture response failed; checking the order before reporting an error', [
+                'invoice' => $invoice->invoice_number,
+                'paypal_order_id' => $validated['paypal_order_id'],
+                'message' => $e->getMessage(),
+            ]);
 
-            return response()->json(['success' => false, 'message' => 'PayPal could not confirm this payment. Please try again or contact dispatch.'], 502);
+            try {
+                $capture = $this->payPalService->getOrder($validated['paypal_order_id']);
+            } catch (Throwable $lookupError) {
+                Log::error('PayPal capture and order recovery both failed', [
+                    'invoice' => $invoice->invoice_number,
+                    'paypal_order_id' => $validated['paypal_order_id'],
+                    'message' => $lookupError->getMessage(),
+                ]);
+
+                return response()->json(['success' => false, 'message' => 'PayPal could not confirm this payment. Please refresh the invoice before trying again or contact dispatch.'], 502);
+            }
         }
-        $captureData = data_get($capture, 'purchase_units.0.payments.captures.0');
-        $amount = data_get($captureData, 'amount.value');
-        $currency = data_get($captureData, 'amount.currency_code');
-        $reference = data_get($capture, 'purchase_units.0.reference_id');
-        $paypalInvoice = data_get($capture, 'purchase_units.0.invoice_id');
-        abort_unless(
-            ($capture['status'] ?? null) === 'COMPLETED'
-            && ($captureData['status'] ?? null) === 'COMPLETED'
-            && $currency === 'GBP'
-            && bccomp((string) $amount, (string) $invoice->total_amount, 2) === 0
-            && $reference === $invoice->invoice_number
-            && $paypalInvoice === $invoice->invoice_number,
-            422,
-            'PayPal payment could not be verified.'
-        );
+
+        $captureData = $this->verifiedCapture($capture, $invoice);
+        if (! $captureData) {
+            return response()->json([
+                'success' => false,
+                'message' => $captureFailed
+                    ? 'PayPal has not completed this payment. Please refresh the invoice before trying again or contact dispatch.'
+                    : 'PayPal payment could not be verified.',
+            ], 422);
+        }
 
         $paymentRecorded = DB::transaction(function () use ($invoice, $captureData) {
             $lockedInvoice = Invoice::query()->lockForUpdate()->findOrFail($invoice->id);
@@ -130,13 +141,33 @@ class PaymentController extends Controller
 
             return true;
         });
-        // Dispatch synchronously so customer and admin confirmations are attempted
-        // before the successful capture response is returned.
+        // Confirmation delivery must never turn a completed payment into a checkout error.
         if ($paymentRecorded) {
-            SendPaymentNotifications::dispatchSync($invoice->id);
+            SendPaymentNotifications::dispatchAfterResponse($invoice->id);
         }
 
         return response()->json(['success' => true, 'message' => 'Payment completed successfully.', 'invoice_number' => $invoice->invoice_number]);
+    }
+
+    private function verifiedCapture(array $capture, Invoice $invoice): ?array
+    {
+        $captureData = data_get($capture, 'purchase_units.0.payments.captures.0');
+        $amount = data_get($captureData, 'amount.value');
+
+        if (! is_array($captureData) || ! is_numeric($amount)) {
+            return null;
+        }
+
+        $verified = ($capture['status'] ?? null) === 'COMPLETED'
+            && ($captureData['status'] ?? null) === 'COMPLETED'
+            && data_get($captureData, 'amount.currency_code') === 'GBP'
+            && bccomp((string) $amount, (string) $invoice->total_amount, 2) === 0
+            && data_get($capture, 'purchase_units.0.reference_id') === $invoice->invoice_number
+            && data_get($capture, 'purchase_units.0.invoice_id') === $invoice->invoice_number
+            && is_string($captureData['id'] ?? null)
+            && $captureData['id'] !== '';
+
+        return $verified ? $captureData : null;
     }
 
     private function payPalClientId(): ?string

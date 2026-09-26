@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SEO;
 
 use App\Http\Controllers\Controller;
+use App\Models\Blog;
 use App\Models\Service;
 use Illuminate\Http\Response;
 
@@ -21,6 +22,11 @@ class SitemapController extends Controller
             '/instant-quote',
             '/business-accounts',
             '/coverage',
+            '/vehicle-fleet',
+            '/track-delivery',
+            '/reviews',
+            '/industries',
+            '/blog',
             '/about',
             '/contact',
             '/faq',
@@ -33,6 +39,13 @@ class SitemapController extends Controller
             ->map(fn (Service $page) => [
                 'path' => '/'.$page->slug,
                 'lastmod' => $page->updated_at?->toAtomString() ?? now()->toAtomString(),
+            ]);
+
+        $blogPages = Blog::query()->published()
+            ->where('noindex', false)->orderByDesc('published_at')->get(['slug', 'updated_at', 'published_at'])
+            ->map(fn (Blog $post) => [
+                'path' => '/blog/'.$post->slug,
+                'lastmod' => ($post->updated_at ?? $post->published_at)?->toAtomString() ?? now()->toAtomString(),
             ]);
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -56,6 +69,15 @@ class SitemapController extends Controller
             $xml .= '    <lastmod>' . $page['lastmod'] . '</lastmod>' . "\n";
             $xml .= '    <changefreq>weekly</changefreq>' . "\n";
             $xml .= '    <priority>0.9</priority>' . "\n";
+            $xml .= '  </url>' . "\n";
+        }
+
+        foreach ($blogPages as $page) {
+            $xml .= '  <url>' . "\n";
+            $xml .= '    <loc>' . htmlspecialchars($frontendUrl.$page['path']) . '</loc>' . "\n";
+            $xml .= '    <lastmod>' . $page['lastmod'] . '</lastmod>' . "\n";
+            $xml .= '    <changefreq>monthly</changefreq>' . "\n";
+            $xml .= '    <priority>0.6</priority>' . "\n";
             $xml .= '  </url>' . "\n";
         }
 

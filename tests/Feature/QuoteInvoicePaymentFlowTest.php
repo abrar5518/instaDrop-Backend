@@ -144,7 +144,7 @@ class QuoteInvoicePaymentFlowTest extends TestCase
         (new SendPaymentNotifications($invoice->id))->handle($email, $whatsApp);
     }
 
-    public function test_paypal_capture_marks_invoice_paid_and_dispatches_notifications_synchronously(): void
+    public function test_paypal_capture_marks_invoice_paid_and_dispatches_notifications_after_the_response(): void
     {
         $invoice = $this->paidInvoice();
         $invoice->update(['status' => 'unpaid', 'payment_method' => null, 'payment_transaction_id' => null, 'paid_at' => null]);
@@ -173,7 +173,43 @@ class QuoteInvoicePaymentFlowTest extends TestCase
 
         $this->assertSame('paid', $invoice->fresh()->status);
         $this->assertSame('paid', $invoice->order->fresh()->status);
-        Bus::assertDispatchedSync(SendPaymentNotifications::class, fn ($job) => $job->invoiceId === $invoice->id);
+        Bus::assertDispatchedAfterResponse(SendPaymentNotifications::class, fn ($job) => $job->invoiceId === $invoice->id);
+    }
+
+    public function test_paypal_capture_recovers_a_completed_order_after_a_capture_response_error(): void
+    {
+        $invoice = $this->paidInvoice();
+        $invoice->update(['status' => 'unpaid', 'payment_method' => null, 'payment_transaction_id' => null, 'paid_at' => null]);
+        $invoice->order->update(['status' => 'pending_payment']);
+
+        $completedOrder = [
+            'status' => 'COMPLETED',
+            'purchase_units' => [[
+                'reference_id' => $invoice->invoice_number,
+                'invoice_id' => $invoice->invoice_number,
+                'payments' => ['captures' => [[
+                    'id' => 'PAYPAL-RECOVERED-01',
+                    'status' => 'COMPLETED',
+                    'amount' => ['currency_code' => 'GBP', 'value' => '180.00'],
+                ]]],
+            ]],
+        ];
+
+        $payPal = Mockery::mock(PayPalService::class);
+        $payPal->shouldReceive('captureOrder')->once()->with('PAYPALORDER03')->andThrow(new \RuntimeException('The capture response timed out.'));
+        $payPal->shouldReceive('getOrder')->once()->with('PAYPALORDER03')->andReturn($completedOrder);
+        $this->app->instance(PayPalService::class, $payPal);
+        Bus::fake([SendPaymentNotifications::class]);
+
+        $this->postJson('/api/v1/payments/paypal/capture', [
+            'payment_token' => $invoice->payment_token,
+            'paypal_order_id' => 'PAYPALORDER03',
+        ])->assertOk()->assertJsonPath('success', true);
+
+        $invoice->refresh();
+        $this->assertSame('paid', $invoice->status);
+        $this->assertSame('PAYPAL-RECOVERED-01', $invoice->payment_transaction_id);
+        Bus::assertDispatchedAfterResponse(SendPaymentNotifications::class, fn ($job) => $job->invoiceId === $invoice->id);
     }
 
     public function test_paypal_capture_rejects_an_unverified_capture_status(): void

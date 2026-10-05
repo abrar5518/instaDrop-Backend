@@ -15,6 +15,7 @@ class Invoice extends Model
         'order_id',
         'invoice_number',
         'payment_token',
+        'paypal_order_id',
         'subtotal',
         'vat_amount',
         'total_amount',

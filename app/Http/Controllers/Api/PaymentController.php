@@ -77,6 +77,8 @@ class PaymentController extends Controller
                 throw new \RuntimeException('PayPal did not return an order ID.');
             }
 
+            $invoice->forceFill(['paypal_order_id' => $order['id']])->save();
+
             return response()->json(['success' => true, 'order_id' => $order['id']]);
         } catch (Throwable $e) {
             Log::error('PayPal order creation failed', ['invoice' => $invoice->invoice_number, 'message' => $e->getMessage()]);
@@ -94,6 +96,20 @@ class PaymentController extends Controller
         $invoice = Invoice::with('order')->where('payment_token', $validated['payment_token'])->firstOrFail();
         if ($invoice->status === 'paid') {
             return response()->json(['success' => true, 'message' => 'Invoice has already been paid.', 'invoice_number' => $invoice->invoice_number]);
+        }
+
+        if (filled($invoice->paypal_order_id)
+            && ! hash_equals((string) $invoice->paypal_order_id, $validated['paypal_order_id'])) {
+            Log::warning('PayPal capture order did not match the order stored for the invoice', [
+                'invoice' => $invoice->invoice_number,
+                'stored_paypal_order_id' => $invoice->paypal_order_id,
+                'submitted_paypal_order_id' => $validated['paypal_order_id'],
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'This PayPal payment does not match the invoice. Please contact dispatch before trying again.',
+            ], 422);
         }
 
         $captureFailed = false;
@@ -120,13 +136,36 @@ class PaymentController extends Controller
             }
         }
 
-        $captureData = $this->verifiedCapture($capture, $invoice);
+        $captureData = $this->verifiedCapture($capture, $invoice, $validated['paypal_order_id']);
+        if (! $captureData && ! $captureFailed) {
+            Log::warning('PayPal capture response was incomplete; checking the order before reporting an error', $this->verificationContext(
+                $capture,
+                $invoice,
+                $validated['paypal_order_id'],
+            ));
+
+            try {
+                $capture = $this->payPalService->getOrder($validated['paypal_order_id']);
+                $captureData = $this->verifiedCapture($capture, $invoice, $validated['paypal_order_id']);
+            } catch (Throwable $lookupError) {
+                Log::error('PayPal order lookup after an incomplete capture response failed', [
+                    'invoice' => $invoice->invoice_number,
+                    'paypal_order_id' => $validated['paypal_order_id'],
+                    'message' => $lookupError->getMessage(),
+                ]);
+            }
+        }
+
         if (! $captureData) {
+            Log::warning('PayPal payment failed verification', $this->verificationContext(
+                $capture,
+                $invoice,
+                $validated['paypal_order_id'],
+            ));
+
             return response()->json([
                 'success' => false,
-                'message' => $captureFailed
-                    ? 'PayPal has not completed this payment. Please refresh the invoice before trying again or contact dispatch.'
-                    : 'PayPal payment could not be verified.',
+                'message' => 'PayPal payment is still being confirmed. Do not pay again. Please refresh shortly or contact dispatch.',
             ], 422);
         }
 
@@ -149,7 +188,7 @@ class PaymentController extends Controller
         return response()->json(['success' => true, 'message' => 'Payment completed successfully.', 'invoice_number' => $invoice->invoice_number]);
     }
 
-    private function verifiedCapture(array $capture, Invoice $invoice): ?array
+    private function verifiedCapture(array $capture, Invoice $invoice, string $paypalOrderId): ?array
     {
         $captureData = data_get($capture, 'purchase_units.0.payments.captures.0');
         $amount = data_get($captureData, 'amount.value');
@@ -158,16 +197,43 @@ class PaymentController extends Controller
             return null;
         }
 
-        $verified = ($capture['status'] ?? null) === 'COMPLETED'
+        $optionalInvoiceIds = array_values(array_filter([
+            data_get($capture, 'purchase_units.0.invoice_id'),
+            data_get($captureData, 'invoice_id'),
+        ], fn ($value) => is_string($value) && $value !== ''));
+        $optionalInvoiceIdsMatch = count(array_filter(
+            $optionalInvoiceIds,
+            fn (string $value) => ! hash_equals($invoice->invoice_number, $value),
+        )) === 0;
+
+        $verified = is_string($capture['id'] ?? null)
+            && hash_equals($paypalOrderId, $capture['id'])
+            && ($capture['status'] ?? null) === 'COMPLETED'
             && ($captureData['status'] ?? null) === 'COMPLETED'
             && data_get($captureData, 'amount.currency_code') === 'GBP'
             && bccomp((string) $amount, (string) $invoice->total_amount, 2) === 0
             && data_get($capture, 'purchase_units.0.reference_id') === $invoice->invoice_number
-            && data_get($capture, 'purchase_units.0.invoice_id') === $invoice->invoice_number
+            && $optionalInvoiceIdsMatch
             && is_string($captureData['id'] ?? null)
             && $captureData['id'] !== '';
 
         return $verified ? $captureData : null;
+    }
+
+    private function verificationContext(array $capture, Invoice $invoice, string $paypalOrderId): array
+    {
+        return [
+            'invoice' => $invoice->invoice_number,
+            'submitted_paypal_order_id' => $paypalOrderId,
+            'response_paypal_order_id' => $capture['id'] ?? null,
+            'order_status' => $capture['status'] ?? null,
+            'capture_status' => data_get($capture, 'purchase_units.0.payments.captures.0.status'),
+            'amount' => data_get($capture, 'purchase_units.0.payments.captures.0.amount.value'),
+            'currency' => data_get($capture, 'purchase_units.0.payments.captures.0.amount.currency_code'),
+            'reference_id' => data_get($capture, 'purchase_units.0.reference_id'),
+            'purchase_unit_invoice_id' => data_get($capture, 'purchase_units.0.invoice_id'),
+            'capture_invoice_id' => data_get($capture, 'purchase_units.0.payments.captures.0.invoice_id'),
+        ];
     }
 
     private function payPalClientId(): ?string

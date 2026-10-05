@@ -39,6 +39,7 @@ class PayPalConfigurationTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->url() === 'https://api-m.paypal.com/v2/checkout/orders'
             && $request->hasHeader('PayPal-Request-Id')
             && $request['purchase_units'][0]['invoice_id'] === 'INV-1001'
+            && $request['purchase_units'][0]['custom_id'] === 'INV-1001'
             && $request['purchase_units'][0]['amount'] === ['currency_code' => 'GBP', 'value' => '120.00']
             && $request['payment_source']['paypal']['experience_context']['shipping_preference'] === 'NO_SHIPPING');
     }
@@ -88,6 +89,7 @@ class PayPalConfigurationTest extends TestCase
         $this->assertSame('COMPLETED', $capture['status']);
         Http::assertSent(fn (Request $request) => $request->url() === 'https://api-m.paypal.com/v2/checkout/orders/PAYPALORDER01/capture'
             && $request->body() === '{}'
+            && $request->hasHeader('Prefer', 'return=representation')
             && $request->hasHeader('Content-Type', 'application/json'));
     }
 }

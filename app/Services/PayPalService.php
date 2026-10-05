@@ -94,6 +94,7 @@ class PayPalService
                 'purchase_units' => [[
                     'reference_id' => $invoiceNumber,
                     'invoice_id' => $invoiceNumber,
+                    'custom_id' => $invoiceNumber,
                     'description' => 'InstaDrop courier service',
                     'amount' => ['currency_code' => $currency, 'value' => $amount],
                 ]],
@@ -111,7 +112,10 @@ class PayPalService
     public function captureOrder(string $orderId): array
     {
         return $this->client()
-            ->withHeaders(['PayPal-Request-Id' => 'capture-'.$orderId])
+            ->withHeaders([
+                'PayPal-Request-Id' => 'capture-'.$orderId,
+                'Prefer' => 'return=representation',
+            ])
             ->withBody('{}', 'application/json')
             ->send('POST', '/v2/checkout/orders/'.rawurlencode($orderId).'/capture')
             ->throw()->json();

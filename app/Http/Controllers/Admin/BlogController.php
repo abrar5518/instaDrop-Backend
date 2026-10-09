@@ -42,13 +42,11 @@ class BlogController extends Controller
             'content' => 'required|string|max:1000000', 'status' => ['required', Rule::in(['draft', 'published'])],
             'image' => [$blog->image_path ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=8000,max_height=8000'],
             'image_alt' => 'required|string|max:255',
-            'card_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:width=1200,height=500',
+            'card_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'meta_title' => 'nullable|string|max:255', 'meta_description' => 'nullable|string|max:500',
             'meta_keywords' => 'nullable|string|max:1000', 'og_title' => 'nullable|string|max:255',
             'og_description' => 'nullable|string|max:500',
             'og_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:max_width=8000,max_height=8000',
-        ], [
-            'card_image.dimensions' => 'The blog box image must be exactly 1200 × 500 pixels.',
         ]);
         $data['content'] = $sanitizer->clean($data['content']);
         if (trim(html_entity_decode(strip_tags($data['content']))) === '') {

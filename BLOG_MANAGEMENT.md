@@ -5,7 +5,7 @@ Admin: `/admin/blogs` (existing admin login). Frontend: `https://instadrop.sahoo
 ## Writing a blog
 
 1. Choose **Create blog**, enter the title, slug, category and short description.
-2. Upload the 1280 × 400 px featured image for the full article and, optionally, a separate box image for the `/blog` listing card. Box images can use any dimensions; the card contains the complete image without cropping. A 1200 × 675 px image is recommended.
+2. Upload the 1280 × 400 px featured image for the full article and, optionally, a separate box image for the `/blog` listing card. Box images can use any dimensions; the image fills the card using cover, so edges may be cropped when its ratio differs. A 1200 × 675 px image is recommended.
 3. Write the entire article in the single editor, including the visible Heading 1. The title field is for cards and metadata, so it is not duplicated above the rich content.
 4. Use the toolbar for headings, bold, lists, alignment, tables and image uploads. Use the editor's link button for internal page paths or external URLs.
 5. Fill in the optional meta title, description and comma-separated keywords. Social title, description and image fall back to SEO fields and the featured image. Index/follow controls are available. There is no canonical field or canonical output.

@@ -42,10 +42,13 @@ class BlogController extends Controller
             'content' => 'required|string|max:1000000', 'status' => ['required', Rule::in(['draft', 'published'])],
             'image' => [$blog->image_path ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=8000,max_height=8000'],
             'image_alt' => 'required|string|max:255',
+            'card_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:width=1200,height=500',
             'meta_title' => 'nullable|string|max:255', 'meta_description' => 'nullable|string|max:500',
             'meta_keywords' => 'nullable|string|max:1000', 'og_title' => 'nullable|string|max:255',
             'og_description' => 'nullable|string|max:500',
             'og_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:max_width=8000,max_height=8000',
+        ], [
+            'card_image.dimensions' => 'The blog box image must be exactly 1200 × 500 pixels.',
         ]);
         $data['content'] = $sanitizer->clean($data['content']);
         if (trim(html_entity_decode(strip_tags($data['content']))) === '') {
@@ -53,10 +56,10 @@ class BlogController extends Controller
         }
         foreach (['is_featured', 'noindex', 'nofollow'] as $field) $data[$field] = $request->boolean($field);
         $data['published_at'] = $data['status'] === 'published' ? ($blog->published_at ?? now()) : null;
-        unset($data['image'], $data['og_image']);
+        unset($data['image'], $data['card_image'], $data['og_image']);
         $newPaths = [];
         try {
-            foreach (['image' => 'image_path', 'og_image' => 'og_image_path'] as $input => $column) {
+            foreach (['image' => 'image_path', 'card_image' => 'card_image_path', 'og_image' => 'og_image_path'] as $input => $column) {
                 if ($request->hasFile($input)) {
                     $path = $request->file($input)->store('blogs', 'public');
                     if (!$path) throw new \RuntimeException('Image storage failed. Please try again.');

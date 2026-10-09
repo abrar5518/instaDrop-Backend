@@ -56,14 +56,19 @@
   }
   ['meta_title', 'meta_description', 'excerpt'].forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
   updatePreview();
-  let previewUrl;
-  document.getElementById('image').addEventListener('change', event => {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = URL.createObjectURL(file);
-    const image = document.getElementById('image-preview');
-    image.src = previewUrl;
-    image.classList.remove('hidden');
-  });
+  const previewUrls = new Map();
+  function attachImagePreview(inputId, previewId) {
+    document.getElementById(inputId).addEventListener('change', event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (previewUrls.has(inputId)) URL.revokeObjectURL(previewUrls.get(inputId));
+      const previewUrl = URL.createObjectURL(file);
+      previewUrls.set(inputId, previewUrl);
+      const image = document.getElementById(previewId);
+      image.src = previewUrl;
+      image.classList.remove('hidden');
+    });
+  }
+  attachImagePreview('image', 'image-preview');
+  attachImagePreview('card_image', 'card-image-preview');
 })();

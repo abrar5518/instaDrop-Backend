@@ -29,6 +29,7 @@ class BlogManagementTest extends TestCase
             'category' => 'Testing', 'excerpt' => 'A temporary test article.',
             'content' => '<h1>Test article</h1><p><strong>Bold</strong> <a href="/contact">Contact</a></p><table><tbody><tr><td>Cell</td></tr></tbody></table>',
             'image' => UploadedFile::fake()->image('cover.jpg', 1280, 630),
+            'card_image' => UploadedFile::fake()->image('card.jpg', 1200, 500),
             'image_alt' => 'Test cover', 'status' => 'draft',
             'meta_title' => 'Custom SEO title', 'meta_description' => 'Custom search description',
             'meta_keywords' => 'courier, test',
@@ -50,12 +51,13 @@ class BlogManagementTest extends TestCase
         $this->post('/admin/blogs', $data)->assertSessionHasNoErrors()->assertRedirect();
         $blog = Blog::where('slug', $data['slug'])->firstOrFail();
         Storage::disk('public')->assertExists($blog->image_path);
+        Storage::disk('public')->assertExists($blog->card_image_path);
         $this->getJson('/api/v1/blogs/'.$blog->slug)->assertNotFound();
         $this->getJson('/api/v1/blogs')->assertJsonMissing(['slug' => $blog->slug]);
-        unset($data['image']);
+        unset($data['image'], $data['card_image']);
         $data['status'] = 'published';
         $this->put('/admin/blogs/'.$blog->id, $data)->assertSessionHasNoErrors();
-        $this->getJson('/api/v1/blogs/'.$blog->slug)->assertOk()->assertJsonPath('data.seo.title', 'Custom SEO title')->assertJsonPath('data.seo.keywords', 'courier, test')->assertJsonPath('data.seo.noindex', false);
+        $this->getJson('/api/v1/blogs/'.$blog->slug)->assertOk()->assertJsonPath('data.cardImage', Storage::disk('public')->url($blog->card_image_path))->assertJsonPath('data.seo.title', 'Custom SEO title')->assertJsonPath('data.seo.keywords', 'courier, test')->assertJsonPath('data.seo.noindex', false);
         $data['title'] = 'Updated title';
         $data['noindex'] = '1';
         $this->put('/admin/blogs/'.$blog->id, $data)->assertSessionHasNoErrors();
@@ -76,6 +78,7 @@ class BlogManagementTest extends TestCase
             'excerpt' => 'Existing excerpt', 'content' => '<p>Existing content</p>', 'status' => 'draft',
         ]);
         $this->post('/admin/blogs', $this->payload(['slug' => $existing->slug]))->assertSessionHasErrors('slug');
+        $this->post('/admin/blogs', $this->payload(['card_image' => UploadedFile::fake()->image('wrong-ratio.jpg', 1200, 400)]))->assertSessionHasErrors('card_image');
         $this->postJson('/admin/blogs/upload', ['files' => [UploadedFile::fake()->create('payload.svg', 1, 'image/svg+xml')]])->assertUnprocessable();
         $this->post('/admin/blogs', $this->payload(['content' => '<script>alert(1)</script>']))->assertSessionHasErrors('content');
     }

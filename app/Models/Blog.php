@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Blog extends Model
 {
-    protected $fillable = ['title', 'slug', 'category', 'excerpt', 'content', 'image_path', 'image_alt', 'status', 'is_featured', 'published_at', 'meta_title', 'meta_description', 'meta_keywords', 'og_title', 'og_description', 'og_image_path', 'noindex', 'nofollow'];
+    protected $fillable = ['title', 'slug', 'category', 'excerpt', 'content', 'image_path', 'image_alt', 'card_image_path', 'status', 'is_featured', 'published_at', 'meta_title', 'meta_description', 'meta_keywords', 'og_title', 'og_description', 'og_image_path', 'noindex', 'nofollow'];
 
     protected function casts(): array
     {
@@ -26,6 +26,7 @@ class Blog extends Model
             'slug' => $this->slug, 'title' => $this->title, 'category' => $this->category,
             'description' => $this->excerpt,
             'image' => $this->image_path ? Storage::disk('public')->url($this->image_path) : null,
+            'cardImage' => $this->card_image_path ? Storage::disk('public')->url($this->card_image_path) : null,
             'alt' => $this->image_alt ?: $this->title,
             'date' => $this->published_at?->format('j F Y'),
             'publishedAt' => $this->published_at?->toIso8601String(),

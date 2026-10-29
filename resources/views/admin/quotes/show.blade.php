@@ -151,12 +151,12 @@
                 <div class="space-y-4 text-xs">
                     <div>
                         <label class="block text-slate-700 font-bold mb-1">Full Pickup Address</label>
-                        <input type="text" name="pickup_address" value="{{ old('pickup_address', 'Unit 4 Logistics Park, '.$quote->collection_postcode) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900">
+                        <input type="text" name="pickup_address" value="{{ old('pickup_address', $quote->collection_postcode) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900">
                     </div>
 
                     <div>
                         <label class="block text-slate-700 font-bold mb-1">Full Delivery Address</label>
-                        <input type="text" name="delivery_address" value="{{ old('delivery_address', 'Building 12 Commerce Center, '.$quote->delivery_postcode) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900">
+                        <input type="text" name="delivery_address" value="{{ old('delivery_address', $quote->delivery_postcode) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900">
                     </div>
 
                     <div>
